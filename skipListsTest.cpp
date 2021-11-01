@@ -6,6 +6,8 @@
 #include <set>
 #include <string>
 #include <memory>
+#include <condition_variable>
+#include <thread>
 #include "gtest/gtest.h"
 #include "skipLists.cpp"
 
@@ -81,9 +83,6 @@ TEST(SkipTest, BenchmarkCRUD) {
         char value[maxLen];
         char key2[maxLen];
         char value2[maxLen];
-        if (i % 1000 == 0) {
-            std::cout << i << std::endl;
-        }
         snprintf(key, maxLen, "key%d", i);
         snprintf(key2, maxLen, "key%d", i);
         snprintf(value, maxLen, "value%d", i);
@@ -92,6 +91,68 @@ TEST(SkipTest, BenchmarkCRUD) {
         skipList.Insert(std::move(entry2));
         ASSERT_NE(skipList.Contains(key2), nullptr);
         ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
+    }
+}
+
+class WaitGroup {
+public:
+    WaitGroup() {
+        counter.store(0);
+    }
+    void Add(int incr = 1) { counter += incr; }
+    void Done() { 
+        if (--counter <= 0) {
+            printf("counter %d\n", counter.load());
+            cond.notify_all();
+        }
+        
+    }
+    void Wait() {
+        std::unique_lock<std::mutex> lock(mutex);
+        cond.wait(lock, [&] { return counter <= 0; });
+    }
+
+private:
+    std::mutex mutex;
+    std::atomic<int> counter;
+    std::condition_variable cond;
+};
+
+void SkipListInsert(SkipList<char*, char*> &skipList, int i, int maxLen){
+    char* key = new char[maxLen];
+    char* value = new char[maxLen];
+    snprintf(key, maxLen, "key%d", i);
+    snprintf(value, maxLen, "value%d", i);
+    Entry<char*, char*> entry2(key , value);
+    skipList.Insert(std::move(entry2));
+}
+
+void SkipListContain(SkipList<char*, char*> &skipList, int i, int maxLen){
+    char key2[maxLen];
+    char value2[maxLen];
+    snprintf(key2, maxLen, "key%d", i);
+    snprintf(value2, maxLen, "value%d", i);
+    ASSERT_NE(skipList.Contains(key2), nullptr);
+    ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
+}
+
+TEST(SkipList, Concurrent) {
+    SkipList<char*, char*> skipList;
+    int maxTime = 40000;
+    int maxLen = 100;
+    
+    std::thread mythread[maxTime];
+    for (int i = 0; i < maxTime; i++) {
+        mythread[i] = std::thread(SkipListInsert, std::ref(skipList), i, maxLen);
+    }
+    for (int i = 0; i < maxTime; i++) {
+        mythread[i].join();
+    }
+    for (int i = 0; i < maxTime; i++) {
+        mythread[i] = std::thread(SkipListContain, std::ref(skipList), i, maxLen);
+    }
+    for (int i = 0; i < maxTime; i++) {
+        mythread[i].join();
     }
 }
 

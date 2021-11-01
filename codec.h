@@ -22,18 +22,18 @@ struct Entry {
     uint64_t expires_at_;
 };
 
-// template<>
-// struct Entry<char*, char*> {
-//     ~Entry() {
-//         free(key_);
-//         free(value_);
-//     };
-//     Entry(){};
-//     Entry(char* key, char* value): key_(key), value_(value){};
-//     char* key_;
-//     char* value_;
-//     uint64_t expires_at_;
-// };
+template<>
+struct Entry<char*, char*> {
+    ~Entry() {
+        //free(key_);
+        //free(value_);
+    };
+    Entry(){};
+    Entry(char* key, char* value): key_(key), value_(value){};
+    char* key_;
+    char* value_;
+    uint64_t expires_at_;
+};
 
 class TestMove{
 public:

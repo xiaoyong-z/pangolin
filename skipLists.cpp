@@ -2,6 +2,7 @@
 #include <random>
 #include <utility>
 #include <cstring>
+#include <mutex>
 #include "codec.h"
 #define SKIPLIST_MAX_HEIGHT 12
 template<typename K, typename V>
@@ -132,7 +133,8 @@ public:
         }
     }
 
-    const Entry<K, V>* Contains(const K& key) const {
+    const Entry<K, V>* Contains(const K& key) {
+        std::lock_guard<std::mutex> lock_guard(mutex);
         double key_score = CalculateKeyScore(key);
         SkipNode<K, V>* cur_node = header_;
         int cur_height = max_height_;
@@ -156,6 +158,7 @@ public:
     
 
     void Insert(Entry<K, V>&& elem) {
+        std::lock_guard<std::mutex> lock_guard(mutex);
         double key_score = CalculateScore(elem);
         // std::cout << "score:" << key_score << std::endl;
         SkipNode<K, V>* cur_node = header_;
@@ -192,11 +195,11 @@ public:
         for (int i = 0; i <= random_height; i++) {
             prev_[i]->nexts_[i] = skipnode;
         }
-        
     }
 
 private:
     SkipNode<K, V>* header_;
     SkipNode<K, V>** prev_;    
+    std::mutex mutex;
     int max_height_;
 };
