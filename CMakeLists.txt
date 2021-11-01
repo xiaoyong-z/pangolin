@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory("third_party/googletest")
 
-add_definitions("-Wall -g -O0 --std=c++17")
+add_definitions("-Wall -O0 -g --std=c++17")
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
