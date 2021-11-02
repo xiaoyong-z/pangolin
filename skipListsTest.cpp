@@ -22,35 +22,35 @@ std::string RandString(int len) {
     return std::string(bytes);
 }
 
-// TEST(SkipTest, TestMove) {
-//     TestMove a(1.2, 1);
-//     TestMove b(2.3, 1);
-//     TestMove c(1.2, 2);
+TEST(SkipTest, TestMove) {
+    TestMove a(1.2, 1);
+    TestMove b(2.3, 1);
+    TestMove c(1.2, 2);
 
-//     std::cout << "generate" << std::endl;
-//     Entry<TestMove, TestMove> entry1(std::move(a), std::move(b));
+    std::cout << "generate" << std::endl;
+    Entry<TestMove, TestMove> entry1(std::move(a), std::move(b));
 
-//     SkipList<TestMove, TestMove> skipList;
+    SkipList<TestMove, TestMove> skipList;
 
 
-//     ASSERT_EQ(skipList.Contains(c), nullptr);
+    ASSERT_EQ(skipList.Contains(c), nullptr);
 
-//     skipList.Insert(std::move(entry1));
+    skipList.Insert(std::move(entry1));
 
-//     TestMove d(2.3, 1);
+    TestMove d(2.3, 1);
 
-//     ASSERT_NE(skipList.Contains(a), nullptr);
-//     ASSERT_EQ(skipList.Contains(a)->value_, d);
+    ASSERT_NE(skipList.Contains(a), nullptr);
+    ASSERT_EQ(skipList.Contains(a)->value_, d);
 
-//     TestMove e(1.2, 1);
-//     TestMove f(2.111, 10);
+    TestMove e(1.2, 1);
+    TestMove f(2.111, 10);
 
-//     Entry<TestMove, TestMove> entry2(std::move(e), std::move(f));
-//     std::cout << "Update before" << std::endl;
-//     skipList.Insert(std::move(entry2));
-//     std::cout << "Update After" << std::endl;
+    Entry<TestMove, TestMove> entry2(std::move(e), std::move(f));
+    std::cout << "Update before" << std::endl;
+    skipList.Insert(std::move(entry2));
+    std::cout << "Update After" << std::endl;
     
-// }
+}
 
 // TEST(SkipTest, BasicCRUD) {
 //     SkipList<char*, char*> skipList;
@@ -74,25 +74,29 @@ std::string RandString(int len) {
 //     ASSERT_EQ(skipList.Contains((char*)"key1")->value_, (char*)"value1 + value2");
 // }
 
-// TEST(SkipTest, BenchmarkCRUD) {
-//     SkipList<char*, char*> skipList;
-//     int maxTime = 100000;
-//     int maxLen = 1000;
-//     for (int i = 0; i < maxTime; i++) {
-//         char key[maxLen];
-//         char value[maxLen];
-//         char key2[maxLen];
-//         char value2[maxLen];
-//         snprintf(key, maxLen, "key%d", i);
-//         snprintf(key2, maxLen, "key%d", i);
-//         snprintf(value, maxLen, "value%d", i);
-//         snprintf(value2, maxLen, "value%d", i);
-//         Entry<char*, char*> entry2(key , value);
-//         skipList.Insert(std::move(entry2));
-//         ASSERT_NE(skipList.Contains(key2), nullptr);
-//         ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
-//     }
-// }
+TEST(SkipTest, BenchmarkCRUD) {
+    SkipList<char*, char*> skipList;
+    int maxTime = 10000;
+    int maxLen = 20;
+    char *key;
+    char *value;
+    Entry<char*, char*>* entry2;
+    for (int i = 0; i < maxTime; i++) {
+        key = new char[maxLen];
+        value = new char[maxLen];
+        char key2[maxLen];
+        char value2[maxLen];
+        snprintf(key, maxLen, "key%d", i);
+        snprintf(value, maxLen, "value%d", i);
+        snprintf(key2, maxLen, "key%d", i);
+        snprintf(value2, maxLen, "value%d", i);
+        entry2 = new Entry<char*, char*>(key , value);
+        skipList.Insert(std::move(*entry2));
+        free(entry2);
+        ASSERT_NE(skipList.Contains(key2), nullptr);
+        ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
+    }
+}
 
 class WaitGroup {
 public:
@@ -118,15 +122,19 @@ private:
     std::condition_variable cond;
 };
 
-const int size = 100000;
+const int size = 10;
+std::mutex write_mutex;
 void SkipListInsert(SkipList<char*, char*> &skipList, int i, int maxLen){
     for (int j = 0; j < size; j++) {
         char* key = new char[maxLen];
         char* value = new char[maxLen];
         snprintf(key, maxLen, "key%d", i * size + j);
         snprintf(value, maxLen, "value%d", i * size + j);
-        Entry<char*, char*> entry2(key , value);
-        skipList.Insert(std::move(entry2));
+        Entry<char*, char*>* entry2 = new Entry<char*, char*>(key , value);
+        write_mutex.lock();
+        skipList.Insert(std::move(*entry2));
+        write_mutex.unlock();
+        free(entry2);
     }
 }
 
@@ -156,7 +164,7 @@ void SkipListContain(SkipList<char*, char*> &skipList, int i, int maxLen){
 
 TEST(SkipList, Concurrent) {
     SkipList<char*, char*> skipList;
-    int maxTime = 2;
+    int maxTime = 100;
     int maxLen = 30;
     
     std::thread mythread[maxTime];

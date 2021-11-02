@@ -25,10 +25,19 @@ struct Entry {
 template<>
 struct Entry<char*, char*> {
     ~Entry() {
-        //free(key_);
-        //free(value_);
+        if (key_) {
+            free(key_);
+            key_ = nullptr;
+        }
+        if (value_) {
+            free(value_);
+            value_ = nullptr;
+        }
     };
-    Entry(){};
+    Entry(){
+        key_ = nullptr;
+        value_ = nullptr;
+    };
     Entry(char* key, char* value): key_(key), value_(value){};
     char* key_;
     char* value_;

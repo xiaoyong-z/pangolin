@@ -24,10 +24,10 @@ struct SkipNode {
     }
 
     ~SkipNode() {
-        // if (Next(0)) {
-        //     delete Next(0);
-        //     SetNext(0, nullptr);
-        // }
+        if (Next(0)) {
+            delete Next(0);
+            SetNext(0, nullptr);
+        }
         delete[] nexts_;
         nexts_ = nullptr;
     }
@@ -151,13 +151,13 @@ public:
     }
 
     inline int Compare(SkipNode<K, V>* node, const K& key, double score) const {
-        // if (node->score_ > score) {
-        //     return 1;
-        // } else if (node->score_ < score) {
-        //     return -1;
-        // } else {
+        if (node->score_ > score) {
+            return 1;
+        } else if (node->score_ < score) {
+            return -1;
+        } else {
             return CompareKey(node->elem_.key_, (key));
-        // }
+        }
     }
 
     const Entry<K, V>* Contains(const K& key) {
@@ -165,7 +165,7 @@ public:
         double key_score = CalculateKeyScore(key);
         SkipNode<K, V>* cur_node = header_;
         int cur_height = GetMaxHeight();
-        while (cur_height >= 0 && cur_node != nullptr) {
+        while (true) {
             SkipNode<K, V>* next_node = cur_node->Next(cur_height);
             if (next_node != nullptr && Compare(next_node, key, key_score) < 0) {
                 cur_node = next_node;
@@ -174,7 +174,6 @@ public:
                     if (next_node != nullptr && Compare(next_node, key, key_score) == 0) {
                         return &next_node->elem_;
                     }
-                    // throw std::runtime_error("die");
                     return nullptr;
                 } else {
                     cur_height--;
@@ -187,12 +186,12 @@ public:
 
     void Insert(Entry<K, V>&& elem) {
         SkipNode<K, V>* prev_[SKIPLIST_MAX_HEIGHT];
-        // std::lock_guard<std::mutex> lock_guard(mutex);
         double key_score = CalculateScore(elem);
         // std::cout << "score:" << key_score << std::endl;
         SkipNode<K, V>* cur_node = header_;
+
         int cur_height = GetMaxHeight();
-        while (cur_height >= 0 && cur_node != nullptr) {
+        while (true) {
             SkipNode<K, V>* next_node = cur_node->Next(cur_height);
             if (next_node != nullptr && Compare(next_node, elem.key_, key_score) < 0) {
                 cur_node = next_node;
@@ -219,8 +218,6 @@ public:
             max_height_.store(random_height, std::memory_order_relaxed);
         }
 
-        // std::lock_guard<std::mutex> lock_guard(mutex);
-        
         SkipNode<K, V>* skip_node = new SkipNode<K, V>(key_score, random_height, std::forward<Entry<K, V>>(elem));
         for (int i = 0; i <= random_height; i++) {
             skip_node->NoBarrier_SetNext(i, prev_[i]->NoBarrier_Next(i));
@@ -230,6 +227,5 @@ public:
 
 private:
     SkipNode<K, V>* header_;
-    // std::mutex mutex;
     std::atomic<int> max_height_;
 };
