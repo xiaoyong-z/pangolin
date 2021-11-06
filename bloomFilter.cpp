@@ -16,7 +16,7 @@ class BloomFilter {
     static void createFilter(const std::vector<uint32_t>& keys,
                              std::vector<char>& filter, int bits_per_key) {
         if (bits_per_key < 0) {
-            bits_per_key = 1;
+            bits_per_key = 0;
         }
         char k = double(bits_per_key) * ln2;
         k = std::min((char)30, std::max((char)1, k));
@@ -62,7 +62,7 @@ class BloomFilter {
     }
 
     static uint32_t Hash(const char* key) {
-        // return xxh32::hash(key, strlen(key), seed);
+        //return xxh32::hash(key, strlen(key), seed);
         return LevelDBHash(key, strlen(key), seed);
     }
 
