@@ -24,3 +24,4 @@ function(meta_test test_file)
 endfunction(meta_test)
 
 meta_test("skipListsTest.cpp")
+meta_test("fileio.cpp")
