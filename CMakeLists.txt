@@ -13,7 +13,9 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 set(install_gtest OFF)
 set(install_gmock OFF)
 set(build_gmock ON)
-
+include_directories(
+    third_party/xxhashct
+)
 
 function(meta_test test_file)
     get_filename_component(test_target_name "${test_file}" NAME_WE)
@@ -24,4 +26,5 @@ function(meta_test test_file)
 endfunction(meta_test)
 
 meta_test("skipListsTest.cpp")
-meta_test("fileio.cpp")
+# meta_test("mmapfile.cpp")
+meta_test("bloomFilterTest.cpp")

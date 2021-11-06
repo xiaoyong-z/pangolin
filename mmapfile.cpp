@@ -1,13 +1,43 @@
-#include <string>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
+
+#include <string>
+#include <cstring>
+#include <cassert>
+
 #include "mmap.cpp"
 #include "util.h"
-class FileIO {
-public:
-    FileIO():mmap_data_(nullptr), fd_(-1){}
+#include "file.h"
+class MmapFile: public File{
+   public:
+    class Reader: public FileReader{
+    public:
+        Reader(){}
+
+        void init(char* data) {
+            data_ = data;
+            offset_ = 0;
+        }
+
+        int Read(char* buf) {
+            int data_len = strlen(data_);
+            if (offset_ >= data_len) {
+                return 0;
+            }
+            int buf_size = strlen(buf);
+            int n = std::min(buf_size, data_len - offset_);
+            memcpy(buf, data_ + offset_, n);
+            offset_ += n;
+            return n;
+        }
+    private:
+        char* data_;
+        int offset_;
+    };
+
+    MmapFile() : mmap_data_(nullptr), fd_(-1) {}
 
     bool open(std::string filename, int flag, uint64_t max_sz) {
         fd_ = ::open(filename.c_str(), flag, 0666);
@@ -73,7 +103,7 @@ public:
 
     bool sync() {
         if (mmap_data_ == nullptr) {
-            LOG("mmap is not initialized: %s", filename_.c_str()); 
+            LOG("mmap is not initialized: %s", filename_.c_str());
             return false;
         }
         return MmapUtil::SingleInstance().Msync(mmap_data_, map_size_);
@@ -86,20 +116,38 @@ public:
                 return false;
             }
             if (size > map_size_) {
-                return MmapUtil::SingleInstance()
+                char* addr = MmapUtil::SingleInstance().Mremap(mmap_data_,
+                                                               map_size_, size);
+                if (addr == MAP_FAILED) {
+                    LOG("remmap failed: %s", filename_.c_str());
+                    return false;
+                }
+                mmap_data_ = addr;
+                map_size_ = size;
             }
         }
         return true;
     }
 
-    
-private:
+    bool NewReader(Reader &reader) {
+        if (mmap_data_ = nullptr) {
+            return false;
+        }
+        reader.init(mmap_data_);
+        return true;
+    }
+
+    bool rename(std::string string) {
+        assert(false);
+        return false;
+    }
+
+
+   private:
     char* mmap_data_;
     int fd_;
     uint64_t map_size_;
     std::string filename_;
 };
 
-int main() {
-
-}
+int main() {}

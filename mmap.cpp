@@ -31,9 +31,7 @@ public:
         return true;
     }
 
-    bool Mremap(char* mmap_data, uint64_t old_size, uint64_t new_size) const {
-        if (mremap(mmap_data, old_size, new_size, MREMAP_MAYMOVE)) {
-
-        }
+    char* Mremap(char* mmap_data, uint64_t old_size, uint64_t new_size) const {
+        return (char*)mremap(mmap_data, old_size, new_size, MREMAP_MAYMOVE);
     }
 };
