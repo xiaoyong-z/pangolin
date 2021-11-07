@@ -1,3 +1,6 @@
+#ifndef MMAPFILE_H
+#define MMAPFILE_H
+
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -7,7 +10,7 @@
 #include <cstring>
 #include <cassert>
 
-#include "mmap.cpp"
+#include "mmap.h"
 #include "util.h"
 #include "file.h"
 class MmapFile: public File{
@@ -37,7 +40,11 @@ class MmapFile: public File{
         int offset_;
     };
 
-    MmapFile() : mmap_data_(nullptr), fd_(-1) {}
+    MmapFile(std::string filename, int flag, uint64_t max_sz) {
+        if (open(filename, flag, max_sz) == false){
+            LOG("construct fail!");
+        }
+    }
 
     bool open(std::string filename, int flag, uint64_t max_sz) {
         fd_ = ::open(filename.c_str(), flag, 0666);
@@ -129,11 +136,11 @@ class MmapFile: public File{
         return true;
     }
 
-    bool NewReader(Reader &reader) {
+    bool NewReader(const std::shared_ptr<FileReader>& reader) {
         if (mmap_data_ = nullptr) {
             return false;
         }
-        reader.init(mmap_data_);
+        reader->init(mmap_data_);
         return true;
     }
 
@@ -149,5 +156,4 @@ class MmapFile: public File{
     uint64_t map_size_;
     std::string filename_;
 };
-
-int main() {}
+#endif

@@ -1,9 +1,12 @@
+#ifndef SKIPLISTS_H
+#define SKIPLISTS_H
+
 #include <mutex>
 #include <random>
 #include <utility>
 #include <cstring>
 #include <mutex>
-#include "codec.h"
+#include "entry.h"
 #define SKIPLIST_MAX_HEIGHT 12
 template<typename K, typename V>
 struct SkipNode {
@@ -229,3 +232,5 @@ private:
     SkipNode<K, V>* header_;
     std::atomic<int> max_height_;
 };
+using STRSkipList = SkipList<std::string, std::string>;
+#endif

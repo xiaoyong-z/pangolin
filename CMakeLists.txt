@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.14)
 project(metakv)
 
 # GoogleTest requires at least C++11
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory("third_party/googletest")
 
-add_definitions("-Wall -O0 -g --std=c++17")
+add_definitions("-Wall -O0 -g")
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -26,5 +26,5 @@ function(meta_test test_file)
 endfunction(meta_test)
 
 meta_test("skipListsTest.cpp")
-# meta_test("mmapfile.cpp")
+meta_test("lsm_test.cpp")
 meta_test("bloomFilterTest.cpp")

@@ -1,3 +1,6 @@
+#ifndef MMAP_H
+#define MMAP_H
+
 #include <sys/mman.h>
 #include "util.h"
 class MmapUtil {
@@ -35,3 +38,4 @@ public:
         return (char*)mremap(mmap_data, old_size, new_size, MREMAP_MAYMOVE);
     }
 };
+#endif

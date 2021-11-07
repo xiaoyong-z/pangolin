@@ -9,7 +9,7 @@
 #include <condition_variable>
 #include <thread>
 #include "gtest/gtest.h"
-#include "skipLists.cpp"
+#include "skipLists.h"
 
 typedef uint64_t Key;
 
