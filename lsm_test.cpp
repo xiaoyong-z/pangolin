@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "skipLists.h"
@@ -33,14 +34,25 @@ TEST(LSM_TEST, basic) {
     std::string value5 = "world5";
     std::string value6 = "world6";
     std::string value7 = "world7";
-    Entry<std::string, std::string>* entry0 = new Entry<std::string, std::string>(std::move(key0), std::move(value0));
-    Entry<std::string, std::string>* entry1 = new Entry<std::string, std::string>(std::move(key1), std::move(value1));
-    Entry<std::string, std::string>* entry2 = new Entry<std::string, std::string>(std::move(key2), std::move(value2));
-    Entry<std::string, std::string>* entry3 = new Entry<std::string, std::string>(std::move(key3), std::move(value3));
-    Entry<std::string, std::string>* entry4 = new Entry<std::string, std::string>(std::move(key4), std::move(value4));
-    Entry<std::string, std::string>* entry5 = new Entry<std::string, std::string>(std::move(key5), std::move(value5));
-    Entry<std::string, std::string>* entry6 = new Entry<std::string, std::string>(std::move(key6), std::move(value6));
-    Entry<std::string, std::string>* entry7 = new Entry<std::string, std::string>(std::move(key7), std::move(value7));
+    std::shared_ptr<Entry<std::string, std::string>> entry0 = std::make_shared<Entry<std::string, std::string>>(std::move(key0), std::move(value0));
+    std::shared_ptr<Entry<std::string, std::string>> entry1 = std::make_shared<Entry<std::string, std::string>>(std::move(key1), std::move(value1));
+    std::shared_ptr<Entry<std::string, std::string>> entry2 = std::make_shared<Entry<std::string, std::string>>(std::move(key2), std::move(value2));
+    std::shared_ptr<Entry<std::string, std::string>> entry3 = std::make_shared<Entry<std::string, std::string>>(std::move(key3), std::move(value3));
+    std::shared_ptr<Entry<std::string, std::string>> entry4 = std::make_shared<Entry<std::string, std::string>>(std::move(key4), std::move(value4));
+    std::shared_ptr<Entry<std::string, std::string>> entry5 = std::make_shared<Entry<std::string, std::string>>(std::move(key5), std::move(value5));
+    std::shared_ptr<Entry<std::string, std::string>> entry6 = std::make_shared<Entry<std::string, std::string>>(std::move(key6), std::move(value6));
+    std::shared_ptr<Entry<std::string, std::string>> entry7 = std::make_shared<Entry<std::string, std::string>>(std::move(key7), std::move(value7));
+    
+    std::vector<std::shared_ptr<Entry<std::string, std::string>>> vec;
+    vec.push_back(entry0);
+    vec.push_back(entry1);
+    vec.push_back(entry2);
+    vec.push_back(entry3);
+    vec.push_back(entry4);
+    vec.push_back(entry5);
+    vec.push_back(entry6);
+    vec.push_back(entry7);
+
     Options opt{
         "../work_test", 
         283,
@@ -55,10 +67,17 @@ TEST(LSM_TEST, basic) {
     file_opt.dir_ = opt.work_dir_;
     file_opt.flag_ = O_CREAT | O_RDWR;
     file_opt.max_sz_ = int(opt.ssTable_max_sz_);
-    std::unique_ptr<WALFile> wal = std::make_unique<WALFile>(file_opt);
+    WALFile* wal_ptr = WALFile::NewWALFile(file_opt);
+    if (wal_ptr == nullptr) {
+        printf("wal file create failed");
+        return;
+    }
+    std::unique_ptr<WALFile> wal(wal_ptr);
     std::unique_ptr<STRSkipList> sl = std::make_unique<STRSkipList>();
     MemTable memtable(std::move(wal), std::move(sl));
-    
+    for (int i = 0; i < vec.size(); i++) {
+        // memtable
+    }
 
     
     // Entry<sts>entry2 = new Entry<char*, char*>(key , value);

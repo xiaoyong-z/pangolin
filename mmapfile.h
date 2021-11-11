@@ -166,6 +166,22 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
+    RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) {
+        uint64_t start = offset + 8;
+        if (start + size > map_size_) {
+            const uint64_t oneGB = 1 << 30;
+            uint64_t growBy = map_size_;
+            growBy = std::min(growBy, oneGB);
+            growBy = std::max(growBy, size + 8);
+            RC result = truncate(growBy + map_size_);
+            if (result != RC::SUCCESS) {
+                return result;
+            }
+        }
+        *(uint64_t*)mmap_data_[start] = size;
+        return RC::SUCCESS;
+    }
+
 
    private:
     char* mmap_data_;

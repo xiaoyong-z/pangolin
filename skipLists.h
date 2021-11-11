@@ -7,6 +7,7 @@
 #include <cstring>
 #include <mutex>
 #include "entry.h"
+#include "util.h"
 #define SKIPLIST_MAX_HEIGHT 12
 template<typename K, typename V>
 struct SkipNode {
@@ -163,7 +164,7 @@ public:
         }
     }
 
-    const Entry<K, V>* Contains(const K& key) {
+    RC Contains(const K& key, const Entry<K, V>*& result) {
         // std::lock_guard<std::mutex> lock_guard(mutex);
         double key_score = CalculateKeyScore(key);
         SkipNode<K, V>* cur_node = header_;
@@ -175,19 +176,20 @@ public:
             } else {
                 if (cur_height == 0) {
                     if (next_node != nullptr && Compare(next_node, key, key_score) == 0) {
-                        return &next_node->elem_;
+                        result = &next_node->elem_;
+                        return RC::SUCCESS;
                     }
-                    return nullptr;
+                    return RC::SKIPLIST_NOT_FOUND;
                 } else {
                     cur_height--;
                 }
             }
         }
-        return nullptr;
+        return RC::SKIPLIST_NOT_FOUND;
     }
     
 
-    void Insert(Entry<K, V>&& elem) {
+    RC Insert(Entry<K, V>&& elem) {
         SkipNode<K, V>* prev_[SKIPLIST_MAX_HEIGHT];
         double key_score = CalculateScore(elem);
         // std::cout << "score:" << key_score << std::endl;
@@ -203,7 +205,7 @@ public:
                 if (cur_height == 0) {
                     if (next_node != nullptr && Compare(next_node, elem.key_, key_score) == 0) {
                         next_node->update(std::forward<Entry<K, V>>(elem));
-                        return;
+                        return RC::SUCCESS;
                     }
                     break; 
                 } else {
@@ -226,6 +228,7 @@ public:
             skip_node->NoBarrier_SetNext(i, prev_[i]->NoBarrier_Next(i));
             prev_[i]->SetNext(i, skip_node);
         }
+        return RC::SUCCESS;
     }
 
 private:

@@ -26,10 +26,12 @@ public:
     virtual RC close() = 0;
     virtual RC fdelete() = 0;
     virtual RC NewReader(const std::shared_ptr<FileReader>& reader) = 0;
+	virtual RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) = 0;
+
+    
     
     // NewReader(offset int) io.Reader
 	// Bytes(off, sz int) ([]byte, error)
-	// AllocateSlice(sz, offset int) ([]byte, int, error)
 	// Slice(offset int) []byte
 };
 #endif

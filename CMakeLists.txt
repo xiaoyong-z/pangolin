@@ -5,7 +5,7 @@ project(metakv)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory("third_party/googletest")
-
+add_subdirectory("third_party/json")
 add_definitions("-Wall -O0 -g")
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -21,7 +21,7 @@ function(meta_test test_file)
     get_filename_component(test_target_name "${test_file}" NAME_WE)
     add_executable("${test_target_name}" "")
     target_sources("${test_target_name}" PRIVATE  "${test_file}")
-    target_link_libraries("${test_target_name}" gmock gtest)
+    target_link_libraries("${test_target_name}" gmock gtest nlohmann_json::nlohmann_json)
     add_test(NAME "${test_target_name}" COMMAND "${test_target_name}")
 endfunction(meta_test)
 

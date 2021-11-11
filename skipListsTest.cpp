@@ -93,6 +93,7 @@ TEST(SkipTest, BenchmarkCRUD) {
         entry2 = new Entry<char*, char*>(key , value);
         skipList.Insert(std::move(*entry2));
         free(entry2);
+        const Entry<char*, char*>*& entry_ptr;
         ASSERT_NE(skipList.Contains(key2), nullptr);
         ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
     }

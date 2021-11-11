@@ -19,7 +19,6 @@ struct Entry {
         return *this;
     }
 
-    
     K key_;
     V value_;
     uint64_t expires_at_;
