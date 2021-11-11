@@ -1,7 +1,7 @@
 #ifndef FILE_H
 #define FILE_H
 #include <string>
-
+#include "util.h"
 class FileReader {
 public:
     virtual int Read(char* buf) = 0;
@@ -20,15 +20,12 @@ struct FileOptions {
 class File {
 public:
     
-    virtual bool truncate(uint64_t n) = 0;
-    virtual bool sync() = 0;
-    virtual bool rename(std::string string) = 0;
-    virtual void close() = 0;
-    virtual void fdelete() = 0;
-    virtual bool NewReader(const std::shared_ptr<FileReader>& reader) = 0;
-    
-    
-
+    virtual RC truncate(uint64_t n) = 0;
+    virtual RC sync() = 0;
+    virtual RC rename(std::string string) = 0;
+    virtual RC close() = 0;
+    virtual RC fdelete() = 0;
+    virtual RC NewReader(const std::shared_ptr<FileReader>& reader) = 0;
     
     // NewReader(offset int) io.Reader
 	// Bytes(off, sz int) ([]byte, error)

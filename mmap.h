@@ -10,32 +10,41 @@ public:
         return mmap_instance;
     }
 
-    char* Mmap(int fd, bool writable, uint64_t size) const {
+    RC Mmap(int fd, bool writable, uint64_t size, char*& mmap_data) const {
         int prots = PROT_READ;
         if (writable) {
             prots |= PROT_WRITE;
         }
-        return (char*)mmap(0, size, prots, MAP_SHARED, fd, 0);
+        char* addr = (char*)mmap(0, size, prots, MAP_SHARED, fd, 0);
+        if (addr == MAP_FAILED) {
+            return RC::MMAP_MMAP;
+        }
+        mmap_data = addr;
+        return RC::SUCCESS;
     }
 
-    bool Msync(char* mmap_data, uint64_t size) const {
+    RC Msync(char* mmap_data, uint64_t size) const {
         if (msync(mmap_data, size, MS_SYNC) == -1) {
             LOG("msync error");
-            return false;
+            return RC::MMAP_MSYNC;
         }
-        return true;
+        return RC::SUCCESS;
     }
 
-    bool Munmap(char* mmap_data, uint64_t size) const {
+    RC Munmap(char* mmap_data, uint64_t size) const {
         if (munmap(mmap_data, size) == -1) {
             LOG("munmap error");
-            return false;
+            return RC::MMAP_MUNMAP;
         }
-        return true;
+        return RC::SUCCESS;
     }
 
-    char* Mremap(char* mmap_data, uint64_t old_size, uint64_t new_size) const {
-        return (char*)mremap(mmap_data, old_size, new_size, MREMAP_MAYMOVE);
+    RC Mremap(char* mmap_data, uint64_t old_size, uint64_t new_size, char*& new_mmap_data) const {
+        char* addr = (char*)mremap(mmap_data, old_size, new_size, MREMAP_MAYMOVE);
+        if (addr == MAP_FAILED) {
+            return RC::MMAP_MREMAP;
+        }
+        return RC::SUCCESS;
     }
 };
 #endif

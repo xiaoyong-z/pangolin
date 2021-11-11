@@ -14,6 +14,8 @@
 #include "util.h"
 #include "file.h"
 class MmapFile: public File{
+   private:
+    MmapFile() {}
    public:
     class Reader: public FileReader{
     public:
@@ -40,18 +42,21 @@ class MmapFile: public File{
         int offset_;
     };
 
-    MmapFile(std::string filename, int flag, uint64_t max_sz) {
-        if (open(filename, flag, max_sz) == false){
-            LOG("construct fail!");
+    static MmapFile* NewMmapFile(std::string filename, int flag, uint64_t max_sz) {
+        MmapFile* mmap_file = new MmapFile();
+        RC result = mmap_file->open(filename, flag, max_sz);
+        if (result != RC::SUCCESS) {
+            return nullptr;
         }
+        return mmap_file;
     }
 
-    bool open(std::string filename, int flag, uint64_t max_sz) {
+    RC open(std::string filename, int flag, uint64_t max_sz) {
         fd_ = ::open(filename.c_str(), flag, 0666);
         if (fd_ < 0) {
             LOG("unable to open: %s", filename.c_str());
             close();
-            return false;
+            return RC::MMAPFILE_OPEN;
         }
         filename_ = filename;
         bool writable = true;
@@ -62,91 +67,103 @@ class MmapFile: public File{
         if (fstat(fd_, &f_stat) == -1) {
             LOG("unable to fstat: %s", filename.c_str());
             close();
-            return false;
+            return RC::MMAPFILE_STAT;
         }
         uint64_t f_size = f_stat.st_size;
         if (f_size < max_sz) {
             if (ftruncate(fd_, max_sz) == -1) {
                 LOG("unable to truncate: %s", filename.c_str());
                 close();
-                return false;
+                return RC::MMAPFILE_TRUNCATE;
             }
             f_size = max_sz;
         }
-        char* addr = MmapUtil::SingleInstance().Mmap(fd_, writable, max_sz);
-        if (addr == MAP_FAILED) {
+        
+        char* addr;
+        RC result = MmapUtil::SingleInstance().Mmap(fd_, writable, max_sz, addr);
+        if (result == RC::MMAP_MMAP) {
             LOG("unable to mmap: %s", filename.c_str());
             close();
-            return false;
+            return result;
         }
         map_size_ = max_sz;
         mmap_data_ = addr;
-        return true;
+        return RC::SUCCESS;
     }
 
-    void close() {
+    RC close() {
         if (fd_ < 0) {
-            return;
+            return RC::SUCCESS;
         }
         if (mmap_data_ != nullptr) {
-            MmapUtil::SingleInstance().Munmap(mmap_data_, map_size_);
+            RC result = MmapUtil::SingleInstance().Munmap(mmap_data_, map_size_);
+            if (result != RC::SUCCESS) {
+                LOG("mmump failed: %s", filename_.c_str());
+                return result;
+            }
         }
         if (::close(fd_) == -1) {
             LOG("unable to close: %s", filename_.c_str());
+            return RC::MMAPFILE_CLOSE; 
         }
+        return RC::SUCCESS;
     }
 
-    void fdelete() {
+    RC fdelete() {
         if (fd_ >= 0) {
             if (ftruncate(fd_, 0) == -1) {
                 LOG("unable to fstat: %s", filename_.c_str());
+                return RC::MMAPFILE_STAT;
             }
             close();
             if (remove(filename_.c_str()) == -1) {
                 LOG("remove error");
+                return RC::MMAPFILE_REMOVE;
             }
         }
+        return RC::SUCCESS;
     }
 
-    bool sync() {
+    RC sync() {
         if (mmap_data_ == nullptr) {
             LOG("mmap is not initialized: %s", filename_.c_str());
-            return false;
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
         }
         return MmapUtil::SingleInstance().Msync(mmap_data_, map_size_);
     }
 
-    bool truncate(uint64_t size) {
+    RC truncate(uint64_t size) {
         if (size >= 0) {
             if (ftruncate(fd_, size) == -1) {
                 LOG("unable to truncate: %s", filename_.c_str());
-                return false;
+                return RC::MMAPFILE_TRUNCATE;
             }
             if (size > map_size_) {
-                char* addr = MmapUtil::SingleInstance().Mremap(mmap_data_,
-                                                               map_size_, size);
-                if (addr == MAP_FAILED) {
+                char* addr;
+                RC result = MmapUtil::SingleInstance().Mremap(mmap_data_, map_size_, size, addr);
+                if (result != RC::SUCCESS) {
                     LOG("remmap failed: %s", filename_.c_str());
-                    return false;
+                    return result;
                 }
                 mmap_data_ = addr;
                 map_size_ = size;
             }
         }
-        return true;
+        return RC::SUCCESS;
     }
 
-    bool NewReader(const std::shared_ptr<FileReader>& reader) {
+    RC NewReader(const std::shared_ptr<FileReader>& reader) {
         if (mmap_data_ = nullptr) {
-            return false;
+            LOG("mmap is not initialized: %s", filename_.c_str());
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
         }
         reader->init(mmap_data_);
-        return true;
+        return RC::SUCCESS;
     }
 
-    bool rename(std::string string) {
+    RC rename(std::string string) {
         assert(false);
-        return false;
+        return RC::SUCCESS;
     }
 
 

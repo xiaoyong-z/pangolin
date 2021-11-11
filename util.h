@@ -1,5 +1,5 @@
 #ifndef UTIL_H
 #define UTIL_H
-#include "errorcode.h"
+#include "rc.h"
 #define LOG printf
 #endif

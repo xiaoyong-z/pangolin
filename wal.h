@@ -7,17 +7,29 @@
 #include "file.h"
 #include "mmapfile.h"
 #include "entry.h"
+#include "util.h"
 class WALFile {
 public:
     WALFile(const FileOptions& opt) {
-        file_ = std::make_unique<MmapFile>(opt.file_name_, opt.flag_, opt.max_sz_);
+        MmapFile* mmap_file = MmapFile::NewMmapFile(opt.file_name_, opt.flag_, opt.max_sz_);
+        if (mmap_file == nullptr) {
+            file_ = nullptr;
+        } else {
+            file_.reset(mmap_file);
+        }
     }
 
-    void Close() {
+    RC Close() {
+        if (file_ == nullptr) {
+            return RC::WAL_UNINTIALIZE;
+        }
         file_->close();
     }
 
-    void Write(const std::shared_ptr<strEntry>& entry) {
+    RC Write(const std::shared_ptr<strEntry>& entry) {
+        if (file_ == nullptr) {
+            return RC::WAL_UNINTIALIZE;
+        }
         // TODO: WAL
     }
 
