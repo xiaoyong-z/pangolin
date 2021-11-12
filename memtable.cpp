@@ -12,7 +12,8 @@ public:
         if (result != RC::SUCCESS) {
             return result;
         }
-        // RC result = skipList_->
+        result = skipList_->Insert(std::move(*entry));
+        return RC::SUCCESS;
     }
     
     std::unique_ptr<WALFile> wal_file_;

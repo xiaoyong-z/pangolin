@@ -33,14 +33,15 @@ TEST(SkipTest, TestMove) {
     SkipList<TestMove, TestMove> skipList;
 
 
-    ASSERT_EQ(skipList.Contains(c), nullptr);
+    const Entry<TestMove, TestMove>* result;
+    ASSERT_EQ(skipList.Contains(c, result), RC::SKIPLIST_NOT_FOUND);
 
     skipList.Insert(std::move(entry1));
 
     TestMove d(2.3, 1);
 
-    ASSERT_NE(skipList.Contains(a), nullptr);
-    ASSERT_EQ(skipList.Contains(a)->value_, d);
+    ASSERT_EQ(skipList.Contains(a, result), RC::SUCCESS);
+    ASSERT_EQ(result->value_, d);
 
     TestMove e(1.2, 1);
     TestMove f(2.111, 10);
@@ -93,9 +94,9 @@ TEST(SkipTest, BenchmarkCRUD) {
         entry2 = new Entry<char*, char*>(key , value);
         skipList.Insert(std::move(*entry2));
         free(entry2);
-        const Entry<char*, char*>*& entry_ptr;
-        ASSERT_NE(skipList.Contains(key2), nullptr);
-        ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
+        const Entry<char*, char*>* entry_ptr;
+        ASSERT_EQ(skipList.Contains(key2, entry_ptr), RC::SUCCESS);
+        ASSERT_EQ(strcmp(entry_ptr->value_, value2), 0);
     }
 }
 
@@ -123,7 +124,7 @@ private:
     std::condition_variable cond;
 };
 
-const int size = 10;
+const int size = 100;
 std::mutex write_mutex;
 void SkipListInsert(SkipList<char*, char*> &skipList, int i, int maxLen){
     for (int j = 0; j < size; j++) {
@@ -148,18 +149,9 @@ void SkipListContain(SkipList<char*, char*> &skipList, int i, int maxLen){
         snprintf(key2, maxLen, "key%d", i * size + j);
         snprintf(value2, maxLen, "value%d", i * size + j);
         // printf("key= %s\n", key2);
-        if (skipList.Contains(key2) != nullptr) {
-            ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
-        } else {
-            skipList.Contains(key2);
-            t2++;
-            if (t2 == 1){
-                Entry<char*, char*> entry2(key2 , value2);
-                skipList.Insert(std::move(entry2));
-                skipList.Contains(key2);
-            }
-            ASSERT_TRUE(false);
-        }
+        const Entry<char*, char*>* entry_ptr;
+        ASSERT_EQ (skipList.Contains(key2, entry_ptr), RC::SUCCESS);
+        ASSERT_EQ (strcmp(entry_ptr->value_, value2), 0);
     }
 }
 

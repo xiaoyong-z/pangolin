@@ -94,18 +94,18 @@ double CalculateKeyScore(const char* key) {
     return double(hash);
 }
 
-// double CalculateKeyScore(const std::string& key) {
-//     size_t len = key.size();
-//     if (len > 8) {
-//         len = 8;
-//     }
-//     uint64_t hash;
-//     for (size_t i = 0; i < len; i++) {
-//         uint64_t shift = uint64_t(64 - 8 - i * 8);
-//         hash |= uint64_t(key[i]) << shift;
-//     }
-//     return double(hash);
-// }
+double CalculateKeyScore(const std::string& key) {
+    size_t len = key.size();
+    if (len > 8) {
+        len = 8;
+    }
+    uint64_t hash;
+    for (size_t i = 0; i < len; i++) {
+        uint64_t shift = uint64_t(64 - 8 - i * 8);
+        hash |= uint64_t(key[i]) << shift;
+    }
+    return double(hash);
+}
 
 // template<typename K>
 // int CompareKey(const K& key1, const K& key2) {
@@ -118,6 +118,10 @@ inline int CompareKey(const TestMove& key1, const TestMove& key2) {
 
 inline int CompareKey(const char* key1, const char* key2) {
     return strcmp(key1, key2);
+}
+
+inline int CompareKey(std::string key1, std::string key2) {
+    return key1.compare(key2);
 }
 
 template<typename K, typename V>
