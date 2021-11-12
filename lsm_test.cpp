@@ -6,10 +6,12 @@
 
 #include "gtest/gtest.h"
 #include "skipLists.h"
-#include "memtable.cpp"
+#include "levels.h"
+#include "memtable.h"
 #include "wal.h"
 #include "file.h"
 #include "lsm.h"
+
 TEST(LSM_TEST, basic) {
     
     // char key2[maxLen];
@@ -76,8 +78,10 @@ TEST(LSM_TEST, basic) {
     std::unique_ptr<STRSkipList> sl = std::make_unique<STRSkipList>();
     MemTable memtable(std::move(wal), std::move(sl));
     for (int i = 0; i < vec.size(); i++) {
-        // memtable
+        memtable.set(vec[i]);
     }
+    std::unique_ptr<LevelManager> level_manager(LevelManager::newLevelManager(file_opt));
+    level_manager->flush(memtable);
 
     
     // Entry<sts>entry2 = new Entry<char*, char*>(key , value);

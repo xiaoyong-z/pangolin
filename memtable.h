@@ -1,3 +1,5 @@
+#ifndef MEMTABLE_H
+#define MEMTABLE_H
 #include "skipLists.h"
 #include <memory>
 #include "wal.h"
@@ -19,3 +21,4 @@ public:
     std::unique_ptr<WALFile> wal_file_;
     std::unique_ptr<STRSkipList> skipList_;
 };
+#endif

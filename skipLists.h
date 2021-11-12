@@ -125,6 +125,29 @@ inline int CompareKey(std::string key1, std::string key2) {
 }
 
 template<typename K, typename V>
+class SkipList;
+
+template <typename K, typename V>
+class SkipListIterator {
+public:
+    bool end() {
+        return it_ != nullptr;
+    }
+    void next() {
+        it_ = it_->Next(0);
+    } 
+
+    Entry<K, V>* entry() {
+        return &it_->elem_;
+    }
+
+private:
+    friend class SkipList<K, V>;
+    SkipNode<K, V>* it_;
+    SkipList<K, V>* skip_list_;
+};
+
+template<typename K, typename V>
 class SkipList {
 public:
     SkipList() {
@@ -139,6 +162,13 @@ public:
         }
         delete header_;
         header_ = nullptr;
+    }
+
+    SkipListIterator<K, V>* NewIterator(){
+        SkipListIterator<K, V>* iterator = new SkipListIterator<K, V>();
+        iterator->it_ = header_->Next(0);
+        iterator->skip_list_ = this;
+        return iterator;
     }
 
     int GetMaxHeight() {
@@ -240,4 +270,6 @@ private:
     std::atomic<int> max_height_;
 };
 using STRSkipList = SkipList<std::string, std::string>;
+
+using STRSkipListIterator = SkipListIterator<std::string, std::string>;
 #endif
