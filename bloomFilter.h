@@ -1,3 +1,6 @@
+#ifndef BLOOMFILTER_H
+#define BLOOMFILTER_H
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -6,6 +9,7 @@
 
 #include "xxh32.hpp"
 #include "coding.h"
+#include "util.h"
 #define ln2 0.69314718056
 class BloomFilter {
    private:
@@ -14,8 +18,8 @@ class BloomFilter {
 
    public:
     // keys has already been hashed
-    static void createFilter(const std::vector<uint32_t>& keys,
-                             std::vector<char>& filter, int bits_per_key) {
+    static RC createFilter(const std::vector<uint32_t>& keys,
+                             std::string& filter, int bits_per_key) {
         if (bits_per_key < 0) {
             bits_per_key = 0;
         }
@@ -35,9 +39,10 @@ class BloomFilter {
             }
         }
         filter[nBytes] = char(k);
+        return RC::SUCCESS;
     }
 
-    static bool Contains(const char* key, const std::vector<char>& filter) {
+    static bool Contains(const char* key, const std::string& filter) {
         if (filter.size() < 2) {
             return false;
         }
@@ -98,3 +103,4 @@ class BloomFilter {
         return h;
     }
 };
+#endif

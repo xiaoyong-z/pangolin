@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include "bloomFilter.cpp"
+#include "bloomFilter.h"
 #include "gtest/gtest.h"
 
 static const int kVerbose = 1;
@@ -73,7 +73,7 @@ class BloomTest : public testing::Test {
     }
 
    private:
-    std::vector<char> filter_;
+    std::string filter_;
     std::vector<uint32_t> keys_;
 };
 

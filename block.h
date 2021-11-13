@@ -4,7 +4,9 @@
 #include "coding.h"
 #include "crc32c.h"
 class Block {
+
 public:
+    friend class Builder;
     Block(): base_key_(""), current_offset(0) {}
 
     int diffKey(const std::string& key) {
@@ -42,6 +44,10 @@ public:
         return estimate_size > max_size;
     }
 
+    inline uint32_t GetKeyCount() {
+        return offset_.size();
+    }
+
     void Finish() {
         for (size_t i = 0; i < offset_.size(); i++) {
             EncodeFix32(&content, offset_[i]);
@@ -51,6 +57,8 @@ public:
         EncodeFix32(&content, crc);
         EncodeFix32(&content, 4);
     }
+
+    
 
 private:
     std::string content;
