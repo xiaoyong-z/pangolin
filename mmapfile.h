@@ -153,7 +153,7 @@ class MmapFile: public File{
     }
 
     RC NewReader(const std::shared_ptr<FileReader>& reader) {
-        if (mmap_data_ = nullptr) {
+        if (mmap_data_ == nullptr) {
             LOG("mmap is not initialized: %s", filename_.c_str());
             return RC::MMAPFILE_MMAP_UNINITIALIZE;
         }
@@ -178,7 +178,9 @@ class MmapFile: public File{
                 return result;
             }
         }
-        *(uint64_t*)mmap_data_[start] = size;
+        uint64_t *ptr = reinterpret_cast<uint64_t*>(mmap_data_);
+        ptr[start] = size;
+        // *(uint64_t*)mmap_data_[start] = size;
         return RC::SUCCESS;
     }
 

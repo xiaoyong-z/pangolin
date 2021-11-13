@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "xxh32.hpp"
+#include "coding.h"
 #define ln2 0.69314718056
 class BloomFilter {
    private:
@@ -66,16 +67,6 @@ class BloomFilter {
         return LevelDBHash(key, strlen(key), seed);
     }
 
-    static inline uint32_t DecodeFixed32(const char* ptr) {
-        const uint8_t* const buffer = reinterpret_cast<const uint8_t*>(ptr);
-
-        // Recent clang and gcc optimize this to a single mov / ldr instruction.
-        return (static_cast<uint32_t>(buffer[0])) |
-                (static_cast<uint32_t>(buffer[1]) << 8) |
-                (static_cast<uint32_t>(buffer[2]) << 16) |
-                (static_cast<uint32_t>(buffer[3]) << 24);
-    }
-
     static uint32_t LevelDBHash(const char* data, size_t n, uint32_t seed) {
         // Similar to murmur hash
         const uint32_t m = 0xc6a4a793;
@@ -85,7 +76,7 @@ class BloomFilter {
 
         // Pick up four bytes at a time
         while (data + 4 <= limit) {
-            uint32_t w = DecodeFixed32(data);
+            uint32_t w = DecodeFix32(data);
             data += 4;
             h += w;
             h *= m;

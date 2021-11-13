@@ -15,8 +15,8 @@ class WALFile {
 private:
     WALFile() {}
 public:
-    static WALFile* NewWALFile(const FileOptions& opt) {
-        MmapFile* mmap_file = MmapFile::NewMmapFile(opt.file_name_, opt.flag_, opt.max_sz_);
+    static WALFile* NewWALFile(const std::shared_ptr<FileOptions>& opt) {
+        MmapFile* mmap_file = MmapFile::NewMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
         if (mmap_file == nullptr) {
             return nullptr;
         }

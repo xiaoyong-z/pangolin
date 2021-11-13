@@ -4,9 +4,9 @@
 #include "memtable.h"
 #include "builder.h"
 class LevelManager {
-
 public:
-    static LevelManager* newLevelManager(const FileOptions& opt){
+    LevelManager() {}
+    static LevelManager* newLevelManager(const std::shared_ptr<Options>& opt){
         LevelManager* level_manger = new LevelManager();
         level_manger->opt = opt;
         // lm.opt = opt
@@ -22,7 +22,7 @@ public:
     RC flush(const MemTable& immutable) {
         
         SkipListIterator<std::string, std::string>* ptr = immutable.skipList_->NewIterator();
-        std::unique_ptr<Builder> builder = std::make_unique<Builder>();
+        std::unique_ptr<Builder> builder = std::make_unique<Builder>(opt);
         std::unique_ptr<STRSkipListIterator> iterator(ptr);
         for (; iterator->end() == false; iterator->next()) {
             builder->insert(iterator->entry());
@@ -33,7 +33,7 @@ public:
 
 private:
     uint64_t max_fid;
-    FileOptions opt;
+    std::shared_ptr<Options> opt;
 };
 
 class levelHandler {

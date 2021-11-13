@@ -11,6 +11,7 @@
 #include "wal.h"
 #include "file.h"
 #include "lsm.h"
+#include "util.h"
 
 TEST(LSM_TEST, basic) {
     
@@ -55,20 +56,14 @@ TEST(LSM_TEST, basic) {
     vec.push_back(entry6);
     vec.push_back(entry7);
 
-    Options opt{
-        "../work_test", 
-        283,
-        1024,
-        1024,
-        0.01
-    };
+    std::shared_ptr<Options> opt = std::make_shared<Options>("../work_test", 283, 1024, 1024, 0.01);
 
-    std::string file_name_ = opt.work_dir_ + "000001.mem";
-    FileOptions file_opt;
-    file_opt.file_name_ = file_name_;
-    file_opt.dir_ = opt.work_dir_;
-    file_opt.flag_ = O_CREAT | O_RDWR;
-    file_opt.max_sz_ = int(opt.ssTable_max_sz_);
+    std::string file_name_ = opt->work_dir_ + "000001.mem";
+    std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
+    file_opt->file_name_ = file_name_;
+    file_opt->dir_ = opt->work_dir_;
+    file_opt->flag_ = O_CREAT | O_RDWR;
+    file_opt->max_sz_ = int(opt->ssTable_max_sz_);
     WALFile* wal_ptr = WALFile::NewWALFile(file_opt);
     if (wal_ptr == nullptr) {
         printf("wal file create failed");
@@ -77,10 +72,10 @@ TEST(LSM_TEST, basic) {
     std::unique_ptr<WALFile> wal(wal_ptr);
     std::unique_ptr<STRSkipList> sl = std::make_unique<STRSkipList>();
     MemTable memtable(std::move(wal), std::move(sl));
-    for (int i = 0; i < vec.size(); i++) {
+    for (size_t i = 0; i < vec.size(); i++) {
         memtable.set(vec[i]);
     }
-    std::unique_ptr<LevelManager> level_manager(LevelManager::newLevelManager(file_opt));
+    std::unique_ptr<LevelManager> level_manager(LevelManager::newLevelManager(opt));
     level_manager->flush(memtable);
 
     

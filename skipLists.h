@@ -137,8 +137,8 @@ public:
         it_ = it_->Next(0);
     } 
 
-    Entry<K, V>* entry() {
-        return &it_->elem_;
+    const Entry<K, V>& entry() {
+        return it_->elem_;
     }
 
 private:
