@@ -5,7 +5,8 @@
 #include "block.h"
 #include "util.h"
 #include "bloomFilter.h"
-#include "indexBlock.h"
+// #include "indexBlock.h"
+#include "kv.pb.h"
 class Builder {
 public:
     Builder(const std::shared_ptr<Options>& opt): opt_(opt), key_count_(0), max_version_(0) {}
@@ -26,6 +27,10 @@ public:
         return RC::SUCCESS;
     }
 
+    RC flush() {
+        return RC::SUCCESS;
+    }
+
     RC done() {
         if (cur_block_ != nullptr) {
             key_count_ += cur_block_->GetKeyCount();
@@ -35,20 +40,27 @@ public:
         int bits_per_key = BloomFilter::calBitsPerKey(key_count_, opt_->bloom_false_positive_);
         std::string filter;
         BloomFilter::createFilter(key_hashs_, filter, bits_per_key);
-        IndexBuilder(filter);
+        std::string indexBlockContent;
+        IndexBuilder(filter, indexBlockContent);
+        return RC::SUCCESS;
     }
 
-    RC IndexBuilder(const std::string& filter) {
-        IndexBlock indexblock;
-        indexblock.key_count_ = key_count_;
-        indexblock.max_version_ = max_version_;
-        indexblock.bloom_filter_ = std::move(filter);
+    RC IndexBuilder(const std::string& filter, std::string& content) {
+        pb::IndexBlock indexblock;
+        indexblock.set_key_count(key_count_);
+        indexblock.set_max_version(max_version_);
+        indexblock.set_bloom_filter(std::move(filter));
+        
         uint64_t block_offset = 0;
         for (size_t i = 0; i < blocks_.size(); i++) {
             std::shared_ptr<Block> block = blocks_[i];
-            indexblock.offsets_.emplace_back(std::move(block->base_key_), block_offset, block->current_offset);
+            pb::BlockOffset* offset = indexblock.add_offsets();
+            offset->set_base_key(std::move(block->base_key_));
+            offset->set_offset(block_offset);
+            offset->set_len(block->current_offset);
             block_offset += block->current_offset;
         }
+        indexblock.SerializeToString(&content);
         return RC::SUCCESS;
     }
 

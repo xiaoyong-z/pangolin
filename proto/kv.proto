@@ -1,0 +1,16 @@
+syntax = "proto3";
+package pb;
+
+
+message IndexBlock {
+    repeated BlockOffset offsets = 1;
+    string bloom_filter = 2;
+    uint32 max_version = 3;
+    uint32 key_count = 4;
+}
+
+message BlockOffset {
+    string base_key = 1;
+    uint64 offset = 2;
+    uint32 len = 3; 
+} 
