@@ -10,6 +10,8 @@ add_subdirectory(proto)
 
 add_definitions("-Wall -O0 -g")
 include_directories(${PROTO_GEN_CXX_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/file)
 
 
 

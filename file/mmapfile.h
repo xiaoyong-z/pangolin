@@ -161,6 +161,19 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
+    RC Bytes(uint64_t offset, int64_t size, char* mmap_addr) {
+        if (mmap_data_ == nullptr) {
+            LOG("mmap is not initialized: %s", filename_.c_str());
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
+        }
+        if (offset + size > map_size_) {
+            LOG("mmap doesn't have enough space : %s", filename_.c_str());
+            return RC::MMAPFILE_NOT_ENOUGH_SPACE;
+        }
+        mmap_addr = mmap_data_ + offset;
+        return RC::SUCCESS;
+    }
+
     RC rename(std::string string) {
         assert(false);
         return RC::SUCCESS;

@@ -13,15 +13,14 @@
 
 class WALFile {
 private:
-    WALFile() {}
+    WALFile(MmapFile* mmap_file): file_(mmap_file) {}
 public:
     static WALFile* NewWALFile(const std::shared_ptr<FileOptions>& opt) {
         MmapFile* mmap_file = MmapFile::NewMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
         if (mmap_file == nullptr) {
             return nullptr;
         }
-        WALFile* wal_file = new WALFile();
-        wal_file->file_.reset(mmap_file);
+        WALFile* wal_file = new WALFile(mmap_file);
         return wal_file;
     }
 
