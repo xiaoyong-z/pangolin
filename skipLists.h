@@ -8,6 +8,7 @@
 #include <mutex>
 #include "entry.h"
 #include "util.h"
+#include "iterator.h"
 #define SKIPLIST_MAX_HEIGHT 12
 template<typename K, typename V>
 struct SkipNode {
@@ -128,16 +129,22 @@ template<typename K, typename V>
 class SkipList;
 
 template <typename K, typename V>
-class SkipListIterator {
+class SkipListIterator: public Iterator<Entry<K, V>, K> {
 public:
-    bool end() {
+    bool hasNext() {
         return it_ != nullptr;
     }
     void next() {
         it_ = it_->Next(0);
     } 
 
-    const Entry<K, V>& entry() {
+    const Entry<K, V>& get() {
+        return it_->elem_;
+    }
+
+    const Entry<K, V>& find(const K& key) {
+        // Todo
+        assert(false);
         return it_->elem_;
     }
 

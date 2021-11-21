@@ -4,7 +4,7 @@ package pb;
 
 message IndexBlock {
     repeated BlockOffset offsets = 1;
-    string bloom_filter = 2;
+    bytes bloom_filter = 2;
     uint32 max_version = 3;
     uint32 key_count = 4;
 }

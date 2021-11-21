@@ -28,7 +28,6 @@ public:
     }
 
     RC flush(SSTable* sstable) {
-        
         if (cur_block_ != nullptr) {
             key_count_ += cur_block_->GetKeyCount();
             cur_block_->Finish();
@@ -50,11 +49,11 @@ public:
             indexBlockContent.clear();
             return result;
         }
-        uint64_t copy_offset = 0;
+        uint64_t copy_offset = SSTABLE_SIZE_LEN;
         for (size_t i = 0; i < blocks_.size(); i++) {
             std::shared_ptr<Block> block = blocks_[i];
-            memcpy(mmap_addr + copy_offset, block->content.data(), block->current_offset);
-            copy_offset += block->current_offset;
+            memcpy(mmap_addr + copy_offset, block->content_.data(), block->current_offset_);
+            copy_offset += block->current_offset_;
         }
         memcpy(mmap_addr + copy_offset, indexBlockContent.data(), index_len);
         copy_offset += index_len;
@@ -62,9 +61,13 @@ public:
         std::string index_checksum_str;
         EncodeFix64(&index_checksum_str, index_len);
         EncodeFix32(&index_checksum_str, index_checksum);
-        EncodeFix32(&index_checksum_str, 4);
+        EncodeFix32(&index_checksum_str, sizeof(index_checksum));
         memcpy(mmap_addr + copy_offset, index_checksum_str.data(), index_checksum_str.size());
-
+        
+        copy_offset += sizeof(index_len) + sizeof(index_checksum) + sizeof(uint32_t);
+        std::string sstable_len;
+        EncodeFix64(&sstable_len, copy_offset);
+        memcpy(mmap_addr, sstable_len.data(), sstable_len.size());
         return RC::SUCCESS;
     }
 
@@ -80,8 +83,8 @@ public:
             pb::BlockOffset* offset = indexblock.add_offsets();
             offset->set_base_key(std::move(block->base_key_));
             offset->set_offset(block_offset);
-            offset->set_len(block->current_offset);
-            block_offset += block->current_offset;
+            offset->set_len(block->current_offset_);
+            block_offset += block->current_offset_;
         }
         block_len = block_offset;
         indexblock.SerializeToString(&content);

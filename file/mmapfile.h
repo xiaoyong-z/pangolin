@@ -69,15 +69,16 @@ class MmapFile: public File{
             close();
             return RC::MMAPFILE_STAT;
         }
-        uint64_t f_size = f_stat.st_size;
-        if (f_size < max_sz) {
+        int file_size = f_stat.st_size;
+        if (file_size == 0) {
             if (ftruncate(fd_, max_sz) == -1) {
                 LOG("unable to truncate: %s", filename.c_str());
                 close();
                 return RC::MMAPFILE_TRUNCATE;
             }
-            f_size = max_sz;
+            file_size = max_sz;
         }
+        
         
         char* addr;
         RC result = MmapUtil::SingleInstance().Mmap(fd_, writable, max_sz, addr);
@@ -161,7 +162,7 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
-    RC Bytes(uint64_t offset, int64_t size, char* mmap_addr) {
+    RC Bytes(uint64_t offset, int64_t size, char*& mmap_addr) {
         if (mmap_data_ == nullptr) {
             LOG("mmap is not initialized: %s", filename_.c_str());
             return RC::MMAPFILE_MMAP_UNINITIALIZE;
@@ -180,6 +181,10 @@ class MmapFile: public File{
     }
 
     RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) {
+        if (mmap_data_ == nullptr) {
+            LOG("mmap is not initialized: %s", filename_.c_str());
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
+        }
         uint64_t start = offset + 8;
         if (start + size > map_size_) {
             const uint64_t oneGB = 1 << 30;
@@ -194,6 +199,15 @@ class MmapFile: public File{
         uint64_t *ptr = reinterpret_cast<uint64_t*>(mmap_data_);
         ptr[start] = size;
         // *(uint64_t*)mmap_data_[start] = size;
+        return RC::SUCCESS;
+    } 
+
+    RC get_mmap_ptr(char*& mmap_data) {
+        if (mmap_data_ == nullptr) {
+            LOG("mmap is not initialized: %s", filename_.c_str());
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
+        }
+        mmap_data = mmap_data_;
         return RC::SUCCESS;
     }
 

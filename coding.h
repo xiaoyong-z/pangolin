@@ -8,9 +8,9 @@ inline void EncodeFix32(std::string *dst, uint32_t value) {
     
     uint8_t *buffer = reinterpret_cast<uint8_t*>(buf);
     buffer[0] = static_cast<uint8_t>(value);
-    buffer[1] = static_cast<uint8_t>(value << 8);
-    buffer[2] = static_cast<uint8_t>(value << 16);
-    buffer[3] = static_cast<uint8_t>(value << 24);
+    buffer[1] = static_cast<uint8_t>(value >> 8);
+    buffer[2] = static_cast<uint8_t>(value >> 16);
+    buffer[3] = static_cast<uint8_t>(value >> 24);
 
     dst->append(buf, sizeof(buf));
 }
@@ -20,18 +20,18 @@ inline void EncodeFix64(std::string *dst, uint64_t value) {
 
     uint8_t *buffer = reinterpret_cast<uint8_t*>(buf);
     buffer[0] = static_cast<uint8_t>(value);
-    buffer[1] = static_cast<uint8_t>(value << 8);
-    buffer[2] = static_cast<uint8_t>(value << 16);
-    buffer[3] = static_cast<uint8_t>(value << 24);
-    buffer[4] = static_cast<uint8_t>(value << 32);
-    buffer[5] = static_cast<uint8_t>(value << 40);
-    buffer[6] = static_cast<uint8_t>(value << 48);
-    buffer[7] = static_cast<uint8_t>(value << 56);
+    buffer[1] = static_cast<uint8_t>(value >> 8);
+    buffer[2] = static_cast<uint8_t>(value >> 16);
+    buffer[3] = static_cast<uint8_t>(value >> 24);
+    buffer[4] = static_cast<uint8_t>(value >> 32);
+    buffer[5] = static_cast<uint8_t>(value >> 40);
+    buffer[6] = static_cast<uint8_t>(value >> 48);
+    buffer[7] = static_cast<uint8_t>(value >> 56);
     
     dst->append(buf, sizeof(buf));
 }
 
-inline int32_t DecodeFix32(const char* ptr) {
+inline uint32_t DecodeFix32(const char* ptr) {
     const uint8_t *buffer = reinterpret_cast<const uint8_t*>(ptr);
     return (static_cast<uint32_t>(buffer[0])) |
            (static_cast<uint32_t>(buffer[1]) << 8) | 
@@ -39,7 +39,7 @@ inline int32_t DecodeFix32(const char* ptr) {
            (static_cast<uint32_t>(buffer[3]) << 24);
 }
 
-inline int64_t DecodeFix64(const char* ptr) {
+inline uint64_t DecodeFix64(const char* ptr) {
     const uint8_t *buffer = reinterpret_cast<const uint8_t*>(ptr);
     return (static_cast<uint64_t>(buffer[0])) |
            (static_cast<uint64_t>(buffer[1]) << 8)  | 
