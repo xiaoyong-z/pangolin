@@ -9,37 +9,38 @@
 #include "entry.h"
 #include "util.h"
 #include "iterator.h"
+#include "arena.h"
 #define SKIPLIST_MAX_HEIGHT 12
-template<typename K, typename V>
 struct SkipNode {
-    SkipNode(double score, int height, Entry<K, V>&& elem): score_(score), elem_(std::forward<Entry<K, V>>(elem)), height_(height) {
-        nexts_ = new std::atomic<SkipNode<K, V>*>[height_ + 1];
-        // nexts_ = new SkipNode<K, V>*[height_ + 1];
+    // SkipNode(double score, int height, Entry&& elem): score_(score), elem_(std::forward<Entry>(elem)), height_(height) {
+    //     nexts_ = new std::atomic<SkipNode*>[height_ + 1];
+    //     for (int i = 0; i < height_ + 1; i++) {
+    //         SetNext(i, nullptr);
+    //     }
+    // }
+
+    SkipNode(double score, int height): 
+        key_(nullptr), key_len_(0), value_(nullptr), 
+        value_len_(0), score_(score), height_(height) {
         for (int i = 0; i < height_ + 1; i++) {
             SetNext(i, nullptr);
         }
     }
     
-    SkipNode(double score, int height): score_(score), height_(height){
-        nexts_ = new std::atomic<SkipNode<K, V>*>[height_ + 1];
-        // nexts_ = new SkipNode<K, V>*[height_ + 1];
-        for (int i = 0; i < height_ + 1; i++) {
-            SetNext(i, nullptr);
-        }
-    }
+    // SkipNode(double score, int height): score_(score), height_(height){
+    //     nexts_ = new std::atomic<SkipNode*>[height_ + 1];
+    //     for (int i = 0; i < height_ + 1; i++) {
+    //         SetNext(i, nullptr);
+    //     }
+    // }
 
     ~SkipNode() {
-        if (Next(0)) {
-            delete Next(0);
-            SetNext(0, nullptr);
-        }
-        delete[] nexts_;
-        nexts_ = nullptr;
-    }
-
-    void update(Entry<K, V>&& elem) {
-        elem_.~Entry();
-        elem_ = std::move(elem);
+        // if (Next(0)) {
+        //     delete Next(0);
+        //     SetNext(0, nullptr);
+        // }
+        // delete[] nexts_;
+        // nexts_ = nullptr;
     }
 
     SkipNode* Next(int n) {
@@ -66,71 +67,77 @@ struct SkipNode {
         nexts_[n].store(x, std::memory_order_relaxed);
     }
 
+    char* key_;
+    uint32_t key_len_;
+    char* value_;
+    uint32_t value_len_;
+
     double score_;
-    Entry<K, V> elem_; 
     int height_;
 private:
-    std::atomic<SkipNode<K, V>*>* nexts_;
+    std::atomic<SkipNode*> nexts_[1];
 };
 
-// template<typename K>
-// double CalculateKeyScore(const K& key) {
+// template<typename std::string>
+// double CalculateKeyScore(const std::string& key) {
 //     return 0;
 // }
 
-double CalculateKeyScore(const TestMove& key) {
-    return key.score_;
-}
+// double CalculateKeyScore(const TestMove& key) {
+//     return key.score_;
+// }
 
-double CalculateKeyScore(const char* key) {
-    int len = strlen(key);
+// double CalculateKeyScore(const char* key) {
+//     int len = strlen(key);
+//     if (len > 8) {
+//         len = 8;
+//     }
+//     uint64_t hash = 0;
+//     for (int i = 0; i < len; i++) {
+//         int shift = 64 - 8 - i * 8;
+//         hash |= uint64_t(key[i]) << shift;
+//     }
+//     return double(hash);
+// }
+
+double CalculateKeyScore(const Slice& key) {
+    size_t len = key.size(); 
+    const char* data = key.data();
     if (len > 8) {
         len = 8;
     }
     uint64_t hash = 0;
-    for (int i = 0; i < len; i++) {
-        int shift = 64 - 8 - i * 8;
-        hash |= uint64_t(key[i]) << shift;
-    }
-    return double(hash);
-}
-
-double CalculateKeyScore(const std::string& key) {
-    size_t len = key.size();
-    if (len > 8) {
-        len = 8;
-    }
-    uint64_t hash;
     for (size_t i = 0; i < len; i++) {
         uint64_t shift = uint64_t(64 - 8 - i * 8);
-        hash |= uint64_t(key[i]) << shift;
+        hash |= uint64_t(data[i]) << shift;
     }
     return double(hash);
 }
 
-// template<typename K>
-// int CompareKey(const K& key1, const K& key2) {
+// template<typename std::string>
+// int CompareKey(const std::string& key1, const std::string& key2) {
 //     return 0;
 // }
 
-inline int CompareKey(const TestMove& key1, const TestMove& key2) {
-    return key1.a_ < key2.a_;
-}
+// inline int CompareKey(const TestMove& key1, const TestMove& key2) {
+//     return key1.a_ < key2.a_;
+// }
 
-inline int CompareKey(const char* key1, const char* key2) {
-    return strcmp(key1, key2);
-}
+// inline int CompareKey(const char* key1, const char* key2) {
+//     return strcmp(key1, key2);
+// }
 
-inline int CompareKey(std::string key1, std::string key2) {
+inline int CompareKey(const Slice& key1, const Slice& key2) {
     return key1.compare(key2);
 }
 
-template<typename K, typename V>
 class SkipList;
 
-template <typename K, typename V>
-class SkipListIterator: public Iterator<Entry<K, V>, K> {
+class SkipListIterator: public Iterator<Entry, std::string> {
 public:
+    friend class SkipList;
+    ~SkipListIterator() {};
+
     bool hasNext() {
         return it_ != nullptr;
     }
@@ -138,41 +145,87 @@ public:
         it_ = it_->Next(0);
     } 
 
-    const Entry<K, V>& get() {
-        return it_->elem_;
+    const Entry& get() {
+        // return it_->elem_;
     }
 
-    const Entry<K, V>& find(const K& key) {
+    const Entry& find(const std::string& key) {
         // Todo
         assert(false);
-        return it_->elem_;
+        // return it_->elem_;
     }
 
 private:
-    friend class SkipList<K, V>;
-    SkipNode<K, V>* it_;
-    SkipList<K, V>* skip_list_;
+    SkipNode* it_;
+    SkipList* skip_list_;
 };
 
-template<typename K, typename V>
 class SkipList {
 public:
     SkipList() {
         max_height_ = 0;
-        header_ = new SkipNode<K, V>(-1, SKIPLIST_MAX_HEIGHT);
+        arena_ = Arena::Instance();
+        header_ = AllocateNewNode(-1, SKIPLIST_MAX_HEIGHT, nullptr);
+
+        // header_ = new SkipNode(-1, SKIPLIST_MAX_HEIGHT);
     }
 
     ~SkipList() {
-        if (header_->Next(0)) {
-            delete header_->Next(0);
-            header_->SetNext(0, nullptr);
-        }
-        delete header_;
-        header_ = nullptr;
+        // if (header_->Next(0)) {
+        //     delete header_->Next(0);
+        //     header_->SetNext(0, nullptr);
+        // }
+        // delete header_;
+        // header_ = nullptr;
     }
 
-    SkipListIterator<K, V>* NewIterator(){
-        SkipListIterator<K, V>* iterator = new SkipListIterator<K, V>();
+    void Update(SkipNode* node, Entry* elem) {
+        std::lock_guard guard(update_mutex_);
+        node->value_ = AllocateNewValue(elem->value_, elem->expires_at_);
+        node->value_len_ = elem->value_.size();
+    }
+    
+    SkipNode* AllocateNewNode(const double score, const int height, Entry* elem) {
+        uint32_t size = sizeof(SkipNode) + height * sizeof(std::atomic<SkipNode*>);
+        char* addr = arena_->allocateAlign(size);
+        SkipNode* node = new(addr) SkipNode(score, height);
+        if (elem != nullptr) {
+            node->key_ = AllocateNewKey(elem->key_);
+            node->key_len_ = elem->key_.size();
+
+            node->value_ = AllocateNewValue(elem->value_, elem->expires_at_);
+            node->value_len_ = elem->value_.size();
+        }
+        return node;
+    }
+
+    char* AllocateNewKey(const Slice& key) {
+        size_t size = key.size();
+        char* addr = arena_->allocateAlign(size);
+        memmove(addr, key.data(), size);
+        return addr;
+    }
+
+    inline Slice GetKey(char* key_data, uint32_t key_len) const{
+        Slice key(key_data, key_len);
+        return key; 
+    }
+
+    char* AllocateNewValue(const Slice& value, const uint64_t expire_at) {
+        size_t size = value.size() + sizeof(uint64_t);
+        char* addr = arena_->allocateAlign(size);
+        memmove(addr, value.data(), value.size());
+        EncodeFix64(addr + value.size(), expire_at);
+        return addr;
+    }
+
+    inline ValueStruct GetValue(char* value_ptr, uint32_t value_len) const{
+        ValueStruct value(value_ptr, value_len, DecodeFix64(value_ptr + value_len));
+        return value; 
+    }
+
+    SkipListIterator* NewIterator(){
+        SkipListIterator* iterator = new SkipListIterator();
         iterator->it_ = header_->Next(0);
         iterator->skip_list_ = this;
         return iterator;
@@ -191,33 +244,36 @@ public:
     }
     
     
-    double CalculateScore(const Entry<K, V>& elem) {
-        return CalculateKeyScore(elem.key_);
+    double CalculateScore(const Slice& key) {
+        return CalculateKeyScore(key);
     }
 
-    inline int Compare(SkipNode<K, V>* node, const K& key, double score) const {
+    inline int Compare(SkipNode* node, const Slice& keyb, double score) const {
         if (node->score_ > score) {
             return 1;
         } else if (node->score_ < score) {
             return -1;
         } else {
-            return CompareKey(node->elem_.key_, (key));
+            const Slice keya = GetKey(node->key_, node->key_len_);
+            return CompareKey(keya, keyb);
         }
     }
 
-    RC Contains(const K& key, const Entry<K, V>*& result) {
+    RC Contains(const Slice& key, Entry& result) {
         // std::lock_guard<std::mutex> lock_guard(mutex);
         double key_score = CalculateKeyScore(key);
-        SkipNode<K, V>* cur_node = header_;
+        SkipNode* cur_node = header_;
         int cur_height = GetMaxHeight();
         while (true) {
-            SkipNode<K, V>* next_node = cur_node->Next(cur_height);
+            SkipNode* next_node = cur_node->Next(cur_height);
             if (next_node != nullptr && Compare(next_node, key, key_score) < 0) {
                 cur_node = next_node;
             } else {
                 if (cur_height == 0) {
                     if (next_node != nullptr && Compare(next_node, key, key_score) == 0) {
-                        result = &next_node->elem_;
+                        const Slice key_find = GetKey(next_node->key_, next_node->key_len_);
+                        const ValueStruct value_find = GetValue(next_node->value_, next_node->value_len_);
+                        result.reset(key_find, value_find);
                         return RC::SUCCESS;
                     }
                     return RC::SKIPLIST_NOT_FOUND;
@@ -230,22 +286,22 @@ public:
     }
     
 
-    RC Insert(Entry<K, V>&& elem) {
-        SkipNode<K, V>* prev_[SKIPLIST_MAX_HEIGHT];
-        double key_score = CalculateScore(elem);
+    RC Insert(Entry* elem) {
+        SkipNode* prev_[SKIPLIST_MAX_HEIGHT];
+        double key_score = CalculateScore(elem->key_);
         // std::cout << "score:" << key_score << std::endl;
-        SkipNode<K, V>* cur_node = header_;
+        SkipNode* cur_node = header_;
 
         int cur_height = GetMaxHeight();
         while (true) {
-            SkipNode<K, V>* next_node = cur_node->Next(cur_height);
-            if (next_node != nullptr && Compare(next_node, elem.key_, key_score) < 0) {
+            SkipNode* next_node = cur_node->Next(cur_height);
+            if (next_node != nullptr && Compare(next_node, elem->key_, key_score) < 0) {
                 cur_node = next_node;
             } else {
                 prev_[cur_height] = cur_node;
                 if (cur_height == 0) {
-                    if (next_node != nullptr && Compare(next_node, elem.key_, key_score) == 0) {
-                        next_node->update(std::forward<Entry<K, V>>(elem));
+                    if (next_node != nullptr && Compare(next_node, elem->key_, key_score) == 0) {
+                        Update(next_node, elem);
                         return RC::SUCCESS;
                     }
                     break; 
@@ -264,7 +320,7 @@ public:
             max_height_.store(random_height, std::memory_order_relaxed);
         }
 
-        SkipNode<K, V>* skip_node = new SkipNode<K, V>(key_score, random_height, std::forward<Entry<K, V>>(elem));
+        SkipNode* skip_node = AllocateNewNode(key_score, random_height, elem);
         for (int i = 0; i <= random_height; i++) {
             skip_node->NoBarrier_SetNext(i, prev_[i]->NoBarrier_Next(i));
             prev_[i]->SetNext(i, skip_node);
@@ -273,10 +329,9 @@ public:
     }
 
 private:
-    SkipNode<K, V>* header_;
+    std::mutex update_mutex_;
+    Arena* arena_;
+    SkipNode* header_;
     std::atomic<int> max_height_;
 };
-using STRSkipList = SkipList<std::string, std::string>;
-
-using STRSkipListIterator = SkipListIterator<std::string, std::string>;
 #endif

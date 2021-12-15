@@ -6,13 +6,11 @@
 
 
 using json = nlohmann::json;
-template<typename K, typename V>
-void to_json(json& j, const Entry<K, V>& entry) {
-    j = json{{"key: ", entry.key_}, {"value: ", entry.value_}};
+void to_json(json& j, const Entry& entry) {
+    j = json{{"key: ", entry.key_.ToString()}, {"value: ", entry.value_.ToString()}};
 }
 
-template<typename K, typename V>
-const char* WalCodec(const Entry<K, V>* entry) {
+const char* WalCodec(const Entry* entry) {
     json j = *entry;
     std::stringstream result;
     result << j;

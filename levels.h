@@ -5,10 +5,11 @@
 #include "builder.h"
 #include "table.h"
 #include "cache.h"
+#include "manifest.h"
 class LevelManager;
 class LevelHandler {
 public:
-    RC level0Get(const std::string& key, strEntry& entry, const std::shared_ptr<Options>& opt) {
+    RC level0Get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
         for (size_t i = 0; i < tables_.size(); i++) {
             if (tables_[i]->get(key, entry, opt) == RC::SUCCESS) {
                 entry.key_ = key;
@@ -18,7 +19,7 @@ public:
         return RC::LEVELS_KEY_NOT_FOUND_IN_CUR_LEVEL;
     }
 
-    RC levelNGet(const std::string& key, strEntry& entry, const std::shared_ptr<Options>& opt) {
+    RC levelNGet(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
 
         return RC::SUCCESS;
     }
@@ -47,7 +48,7 @@ public:
         return level_manger;
     }
 
-    RC get(const std::string& key, strEntry& entry) {
+    RC get(const std::string& key, Entry& entry) {
         RC result = levels_[0].level0Get(key, entry, opt_);
         return RC::SUCCESS;
     }
@@ -60,7 +61,7 @@ public:
         }
         std::shared_ptr<Table> table(table_raw);
         std::shared_ptr<Builder> builder = std::make_shared<Builder>(opt_);
-        std::unique_ptr<STRSkipListIterator> iterator(immutable.skipList_->NewIterator());
+        std::unique_ptr<SkipListIterator> iterator(immutable.skipList_->NewIterator());
         for (; iterator->hasNext() ; iterator->next()) {
             builder->insert(iterator->get());
         }
@@ -71,11 +72,11 @@ public:
         return RC::SUCCESS;
     }
 
-
 private:
     std::atomic<uint32_t> cur_file_id_;
     std::shared_ptr<Options> opt_;
     std::vector<LevelHandler> levels_;
+    std::unique_ptr<Manifest> manifest_;
     Cache cache;
 };
 

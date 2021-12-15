@@ -11,7 +11,7 @@ class Builder {
 public:
     Builder(const std::shared_ptr<Options>& opt): opt_(opt), key_count_(0), max_version_(0) {}
 
-    RC insert(const strEntry& entry) {
+    RC insert(const Entry& entry) {
         if (cur_block_ == nullptr) {
             cur_block_ = std::make_shared<Block>();
         }
@@ -52,22 +52,22 @@ public:
         uint64_t copy_offset = SSTABLE_SIZE_LEN;
         for (size_t i = 0; i < blocks_.size(); i++) {
             std::shared_ptr<Block> block = blocks_[i];
-            memcpy(mmap_addr + copy_offset, block->content_.data(), block->current_offset_);
+            memmove(mmap_addr + copy_offset, block->content_.data(), block->current_offset_);
             copy_offset += block->current_offset_;
         }
-        memcpy(mmap_addr + copy_offset, indexBlockContent.data(), index_len);
+        memmove(mmap_addr + copy_offset, indexBlockContent.data(), index_len);
         copy_offset += index_len;
 
         std::string index_checksum_str;
         EncodeFix64(&index_checksum_str, index_len);
         EncodeFix32(&index_checksum_str, index_checksum);
         EncodeFix32(&index_checksum_str, sizeof(index_checksum));
-        memcpy(mmap_addr + copy_offset, index_checksum_str.data(), index_checksum_str.size());
+        memmove(mmap_addr + copy_offset, index_checksum_str.data(), index_checksum_str.size());
         
         copy_offset += sizeof(index_len) + sizeof(index_checksum) + sizeof(uint32_t);
         std::string sstable_len;
         EncodeFix64(&sstable_len, copy_offset);
-        memcpy(mmap_addr, sstable_len.data(), sstable_len.size());
+        memmove(mmap_addr, sstable_len.data(), sstable_len.size());
         return RC::SUCCESS;
     }
 

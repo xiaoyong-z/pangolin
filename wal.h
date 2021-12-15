@@ -31,7 +31,7 @@ public:
         file_->close();
     }
 
-    RC Write(const std::shared_ptr<strEntry>& entry) {
+    RC Write(const std::shared_ptr<Entry>& entry) {
         if (file_ == nullptr) {
             return RC::WAL_UNINTIALIZE;
         }
@@ -42,7 +42,7 @@ public:
         if (result != RC::SUCCESS) {
             return result;
         }
-        memcpy(addr, walData, strlen(walData));
+        memmove(addr, walData, strlen(walData));
         return RC::SUCCESS;
     }
 

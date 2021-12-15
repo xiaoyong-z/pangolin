@@ -10,7 +10,7 @@
 #include <thread>
 #include "gtest/gtest.h"
 #include "skipLists.h"
-
+#include "arena.h"
 typedef uint64_t Key;
 
 std::string RandString(int len) {
@@ -22,82 +22,101 @@ std::string RandString(int len) {
     return std::string(bytes);
 }
 
-TEST(SkipTest, TestMove) {
-    TestMove a(1.2, 1);
-    TestMove b(2.3, 1);
-    TestMove c(1.2, 2);
+// TEST(SkipTest, TestMove) {
+//     TestMove a(1.2, 1);
+//     TestMove b(2.3, 1);
+//     TestMove c(1.2, 2);
 
-    std::cout << "generate" << std::endl;
-    Entry<TestMove, TestMove> entry1(std::move(a), std::move(b));
+//     std::cout << "generate" << std::endl;
+//     Entry<TestMove, TestMove> entry1(std::move(a), std::move(b));
 
-    SkipList<TestMove, TestMove> skipList;
+//     SkipList<TestMove, TestMove> skipList;
 
 
-    const Entry<TestMove, TestMove>* result;
-    ASSERT_EQ(skipList.Contains(c, result), RC::SKIPLIST_NOT_FOUND);
+//     const Entry<TestMove, TestMove>* result;
+//     ASSERT_EQ(skipList.Contains(c, result), RC::SKIPLIST_NOT_FOUND);
 
-    skipList.Insert(std::move(entry1));
-
-    TestMove d(2.3, 1);
-
-    ASSERT_EQ(skipList.Contains(a, result), RC::SUCCESS);
-    ASSERT_EQ(result->value_, d);
-
-    TestMove e(1.2, 1);
-    TestMove f(2.111, 10);
-
-    Entry<TestMove, TestMove> entry2(std::move(e), std::move(f));
-    std::cout << "Update before" << std::endl;
-    skipList.Insert(std::move(entry2));
-    std::cout << "Update After" << std::endl;
-    
-}
-
-// TEST(SkipTest, BasicCRUD) {
-//     SkipList<char*, char*> skipList;
-    
-//     Entry<char*, char*> entry1((char*)"key1", (char*)"value1");
-//     ASSERT_EQ(skipList.Contains((char*)"key2"), nullptr);
 //     skipList.Insert(std::move(entry1));
-//     ASSERT_NE(skipList.Contains((char*)"key1"), nullptr);
-//     ASSERT_EQ(skipList.Contains((char*)"key1")->value_, (char*)"value1");
 
-//     Entry<char*, char*> entry2((char*)"key2", (char*)"value2");
+//     TestMove d(2.3, 1);
+
+//     ASSERT_EQ(skipList.Contains(a, result), RC::SUCCESS);
+//     ASSERT_EQ(result->value_, d);
+
+//     TestMove e(1.2, 1);
+//     TestMove f(2.111, 10);
+
+//     Entry<TestMove, TestMove> entry2(std::move(e), std::move(f));
+//     std::cout << "Update before" << std::endl;
 //     skipList.Insert(std::move(entry2));
-//     ASSERT_NE(skipList.Contains((char*)"key2"), nullptr);
-//     ASSERT_EQ(skipList.Contains((char*)"key2")->value_, (char*)"value2");
-
-//     ASSERT_EQ(skipList.Contains((char*)"key3"), nullptr);
-
-//     Entry<char*, char*> entry3((char*)"key1", (char*)"value1 + value2");
-//     skipList.Insert(std::move(entry3));
-//     ASSERT_NE(skipList.Contains((char*)"key1"), nullptr);
-//     ASSERT_EQ(skipList.Contains((char*)"key1")->value_, (char*)"value1 + value2");
+//     std::cout << "Update After" << std::endl;
+    
 // }
 
+TEST(SkipTest, BasicCRUD) {
+    SkipList skipList;
+    std::string key1 = "key1";
+    std::string value1 = "value1";
+    std::string key2 = "key2";
+    std::string value2 = "value2";
+    std::string key3 = "key3";
+    std::string value3 = "value3";
+    Slice skey1(key1);
+    Slice svalue1(value1);
+    Slice skey2(key2);
+    Slice svalue2(value2);
+    Slice skey3(key3);
+    Slice svalue3(value3);
+    Entry entry1(skey1, svalue1);
+    Entry entry2(skey2, svalue2);
+    Entry entry3(skey1, svalue3);
+    Entry result;
+
+    ASSERT_EQ(skipList.Contains(skey2, result), RC::SKIPLIST_NOT_FOUND);
+
+    skipList.Insert(&entry1);
+    ASSERT_EQ(skipList.Contains(skey1, result), RC::SUCCESS);
+    ASSERT_EQ(result.value_, value1);
+
+    skipList.Insert(&entry2);
+    ASSERT_EQ(skipList.Contains(skey2, result), RC::SUCCESS);
+    ASSERT_EQ(result.value_, value2);
+
+    skipList.Insert(&entry3);
+    ASSERT_EQ(skipList.Contains(skey1, result), RC::SUCCESS);
+    ASSERT_EQ(result.value_, value3);
+
+    Arena::Instance()->free();
+}
+
 TEST(SkipTest, BenchmarkCRUD) {
-    SkipList<char*, char*> skipList;
+    SkipList skipList;
     int maxTime = 10000;
-    int maxLen = 20;
-    char *key;
-    char *value;
-    Entry<char*, char*>* entry2;
+    
+    char* key_ptr;
+    char* value_ptr;
+    Entry entry;
+    Entry result;
     for (int i = 0; i < maxTime; i++) {
-        key = new char[maxLen];
-        value = new char[maxLen];
-        char key2[maxLen];
-        char value2[maxLen];
-        snprintf(key, maxLen, "key%d", i);
-        snprintf(value, maxLen, "value%d", i);
-        snprintf(key2, maxLen, "key%d", i);
-        snprintf(value2, maxLen, "value%d", i);
-        entry2 = new Entry<char*, char*>(key , value);
-        skipList.Insert(std::move(*entry2));
-        free(entry2);
-        const Entry<char*, char*>* entry_ptr;
-        ASSERT_EQ(skipList.Contains(key2, entry_ptr), RC::SUCCESS);
-        ASSERT_EQ(strcmp(entry_ptr->value_, value2), 0);
+        std::string str = "key" + std::to_string(i);
+        key_ptr = new char[str.size()];
+        memmove(key_ptr, str.data(), str.size());
+        Slice key(key_ptr, str.size());
+        
+        str = "value" + std::to_string(i);
+        value_ptr = new char[str.size()];
+        memmove(value_ptr, str.data(), str.size());
+        Slice value(value_ptr, str.size());
+
+        entry.reset(key, value);
+        skipList.Insert(&entry);
+        // RC rc = skipList.Contains(key, result);
+        ASSERT_EQ(skipList.Contains(key, result), RC::SUCCESS);
+        ASSERT_EQ(result.value_.compare(value), 0);
+        delete[] key_ptr;
+        delete[] value_ptr;
     }
+    Arena::Instance()->free();
 }
 
 class WaitGroup {
@@ -126,37 +145,55 @@ private:
 
 const int size = 100;
 std::mutex write_mutex;
-void SkipListInsert(SkipList<char*, char*> &skipList, int i, int maxLen){
+void SkipListInsert(SkipList &skipList, int i, int maxLen){
+    char* key_ptr;
+    char* value_ptr;
+    Entry entry;
+    Entry result;
+
     for (int j = 0; j < size; j++) {
-        char* key = new char[maxLen];
-        char* value = new char[maxLen];
-        snprintf(key, maxLen, "key%d", i * size + j);
-        snprintf(value, maxLen, "value%d", i * size + j);
-        Entry<char*, char*>* entry2 = new Entry<char*, char*>(key , value);
+        std::string str = "key" + std::to_string(i * size + j);
+        key_ptr = new char[str.size()];
+        memmove(key_ptr, str.data(), str.size());
+        Slice key(key_ptr, str.size());
+        
+        str = "value" + std::to_string(i * size + j);
+        value_ptr = new char[str.size()];
+        memmove(value_ptr, str.data(), str.size());
+        Slice value(value_ptr, str.size());
+
+        entry.reset(key, value);
         write_mutex.lock();
-        skipList.Insert(std::move(*entry2));
+        skipList.Insert(&entry);
         write_mutex.unlock();
-        free(entry2);
+        delete[] key_ptr;
+        delete[] value_ptr;
     }
 }
 
 int t2 = 0;
 
-void SkipListContain(SkipList<char*, char*> &skipList, int i, int maxLen){
+void SkipListContain(SkipList &skipList, int i, int maxLen){
     for (int j = 0; j < size; j++) {
-        char key2[maxLen];
-        char value2[maxLen];
-        snprintf(key2, maxLen, "key%d", i * size + j);
-        snprintf(value2, maxLen, "value%d", i * size + j);
-        // printf("key= %s\n", key2);
-        const Entry<char*, char*>* entry_ptr;
-        ASSERT_EQ (skipList.Contains(key2, entry_ptr), RC::SUCCESS);
-        ASSERT_EQ (strcmp(entry_ptr->value_, value2), 0);
+        std::string str = "key" + std::to_string(i * size + j);
+        char* key_ptr = new char[str.size()];
+        memmove(key_ptr, str.data(), str.size());
+        Slice key(key_ptr, str.size());
+        
+        str = "value" + std::to_string(i * size + j);
+        char* value_ptr = new char[str.size()];
+        memmove(value_ptr, str.data(), str.size());
+        Slice value(value_ptr, str.size());
+        Entry result;
+        ASSERT_EQ (skipList.Contains(key, result), RC::SUCCESS);
+        ASSERT_EQ (result.value_.compare(value), 0);
+        delete[] key_ptr;
+        delete[] value_ptr;
     }
 }
 
 TEST(SkipList, Concurrent) {
-    SkipList<char*, char*> skipList;
+    SkipList skipList;
     int maxTime = 100;
     int maxLen = 30;
     
@@ -173,6 +210,7 @@ TEST(SkipList, Concurrent) {
     for (int i = 0; i < maxTime; i++) {
         mythread[i].join();
     }
+    Arena::Instance()->free();
 }
 
 int main(int argc, char** argv) {

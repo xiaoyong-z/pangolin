@@ -98,20 +98,20 @@ public:
         content_ = std::move(block_content_);
     }
 
-    int diffKey(const std::string& key) {
+    int diffKey(const Slice& key) {
         int min_length = std::min(key.size(), base_key_.size());
         for(int i = 0; i < min_length; i++) {
-            if (base_key_[i] != key[i]) {
+            if (base_key_.data()[i] != key.data()[i]) {
                 return i;
             }
         }
         return min_length;
     }
 
-    RC insert(const strEntry& entry) {
+    RC insert(const Entry& entry) {
         int diff_key_index;
         if (offset_.size() == 0) {
-            base_key_ = entry.key_;
+            base_key_ = std::move(entry.key_.ToString());
             diff_key_index = base_key_.size();
         } else {
             diff_key_index = diffKey(entry.key_);
@@ -120,14 +120,14 @@ public:
         EncodeFix32(&content_, header);
         content_.append(entry.key_.data() + diff_key_index, base_key_.size() - diff_key_index);
         EncodeFix64(&content_, entry.expires_at_);
-        content_.append(entry.value_);
+        content_.append(entry.value_.data(), entry.value_.size());
 
         offset_.push_back(current_offset_);
         current_offset_ = content_.size();
         return RC::SUCCESS;
     }
 
-    inline bool checkFinish(const strEntry& entry, int max_size) {
+    inline bool checkFinish(const Entry& entry, int max_size) {
         int offset_crc_size = (offset_.size() + 1) * 4 + 4 + 8 + 4;
         int estimate_size = content_.size() + offset_crc_size + entry.key_.size() + entry.value_.size() + 8;
         return estimate_size > max_size;

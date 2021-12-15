@@ -1,9 +1,11 @@
 #ifndef FILE_H
 #define FILE_H
 #include <string>
+#include <memory>
 #include "util.h"
 class FileReader {
 public:
+    virtual ~FileReader();
     virtual int Read(char* buf) = 0;
     virtual void init(char* data) = 0;
 };
@@ -19,7 +21,7 @@ struct FileOptions {
 
 class File {
 public:
-    
+    virtual ~File() {};
     virtual RC truncate(uint64_t n) = 0;
     virtual RC sync() = 0;
     virtual RC rename(std::string string) = 0;

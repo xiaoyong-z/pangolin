@@ -14,9 +14,8 @@
 #include "util.h"
 #include "file.h"
 class MmapFile: public File{
-   private:
-    MmapFile() {}
    public:
+    ~MmapFile();
     class Reader: public FileReader{
     public:
         Reader(){}
@@ -33,7 +32,7 @@ class MmapFile: public File{
             }
             int buf_size = strlen(buf);
             int n = std::min(buf_size, data_len - offset_);
-            memcpy(buf, data_ + offset_, n);
+            memmove(buf, data_ + offset_, n);
             offset_ += n;
             return n;
         }

@@ -27,7 +27,7 @@ public:
         return builder->flush(sstable_.get());
     }
 
-    RC get(const std::string& key, strEntry& entry, const std::shared_ptr<Options>& opt) {
+    RC get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
         if (key < sstable_->min_key_ || key > sstable_->max_key_) {
             return RC::TABLE_EXCEED_MINMAX;
         }
