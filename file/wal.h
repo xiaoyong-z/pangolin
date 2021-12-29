@@ -31,11 +31,11 @@ public:
         file_->close();
     }
 
-    RC Write(const std::shared_ptr<Entry>& entry) {
+    RC Write(Entry* entry) {
         if (file_ == nullptr) {
             return RC::WAL_UNINTIALIZE;
         }
-        const char* walData = WalCodec(entry.get());
+        const char* walData = WalCodec(entry);
         std::unique_lock<std::shared_mutex> lock(mutex_);
         char* addr;
         RC result = file_->AllocateSlice(strlen(walData), 0, addr);

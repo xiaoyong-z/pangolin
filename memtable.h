@@ -9,13 +9,17 @@ public:
     MemTable(std::unique_ptr<WALFile>&& wal_file, std::unique_ptr<SkipList>&& skiplist): 
         wal_file_(std::move(wal_file)), skipList_(std::move(skiplist)){};
     
-    RC set(std::shared_ptr<Entry> entry) {
+    RC set(Entry* entry) {
         RC result = wal_file_->Write(entry);
         if (result != RC::SUCCESS) {
             return result;
         }
-        result = skipList_->Insert(entry.get());
+        result = skipList_->Insert(entry);
         return RC::SUCCESS;
+    }
+
+    RC get(const Slice& key, Entry& result) {
+        return skipList_->Contains(key, result);
     }
 
     std::unique_ptr<WALFile> wal_file_;

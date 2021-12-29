@@ -8,7 +8,7 @@ add_subdirectory("third_party/googletest")
 add_subdirectory("third_party/json")
 add_subdirectory("proto")
 
-set(JEMMLLOC_ENABLE OFF)
+set(JEMMLLOC_ENABLE ON)
 
 if (JEMMLLOC_ENABLE)
     add_definitions("-L`jemalloc-config --libdir` -Wl,-rpath,`jemalloc-config --libdir` -ljemalloc `jemalloc-config --libs`")
@@ -40,6 +40,7 @@ endfunction(meta_test)
 meta_test("skipListsTest.cpp")
 meta_test("lsm_test.cpp")
 meta_test("bloomFilterTest.cpp")
+meta_test("memtable_test.cpp")
 
 
 execute_process (
