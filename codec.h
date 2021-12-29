@@ -3,18 +3,11 @@
 #include <nlohmann/json.hpp>
 
 #include "entry.h"
+#include "util.h"
 
+// keylen | valuelen | expires_at | key | value | crc32
+const size_t WalCodec(const Entry* entry, std::string& codec_entry);
 
-using json = nlohmann::json;
-void to_json(json& j, const Entry& entry) {
-    j = json{{"key: ", entry.key_.ToString()}, {"value: ", entry.value_.ToString()}};
-}
-
-const char* WalCodec(const Entry* entry) {
-    json j = *entry;
-    std::stringstream result;
-    result << j;
-    return result.str().c_str();
-}
+const char* OldWalCodec(const Entry* entry);
 
 #endif

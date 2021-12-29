@@ -31,21 +31,10 @@ private:
 
 class LevelManager: public std::enable_shared_from_this<LevelManager> {
     friend class Table;
+    friend class LSM;
 public:
-    LevelManager(): cur_file_id_(0) {
+    LevelManager(const std::shared_ptr<Options>& options): cur_file_id_(0), opt_(options) {
         levels_.emplace_back();
-    }
-    static LevelManager* newLevelManager(const std::shared_ptr<Options>& opt){
-        LevelManager* level_manger = new LevelManager();
-        level_manger->opt_ = opt;
-        // lm.opt_ = opt_
-        // // 读取manifest文件构建管理器
-        // if err := lm.loadManifest(); err != nil {
-        //     panic(err)
-        // }
-        // lm.build()
-        // return lm
-        return level_manger;
     }
 
     RC get(const std::string& key, Entry& entry) {
@@ -54,7 +43,7 @@ public:
     }
 
     RC flush(const MemTable& immutable) {
-        uint64_t file_id = cur_file_id_.fetch_add(1);
+        uint32_t file_id = cur_file_id_.fetch_add(1);
         Table* table_raw = Table::NewTable(opt_->work_dir_, file_id, opt_->ssTable_max_sz_);
         if (table_raw == nullptr) {
             return RC::LEVELS_FILE_NOT_OPEN;

@@ -96,20 +96,20 @@ TEST(LSM_TEST, basic) {
     //     ASSERT_EQ(strcmp(entry.value_.data(), "world7"), 0);
     // }
     
-    // // Entry<sts>entry2 = new Entry<char*, char*>(key , value);
+    // Entry<sts>entry2 = new Entry<char*, char*>(key , value);
 
-    // // SkipList<char*, char*> skipList;
-    // // int maxTime = 10000;
-    // // char *key;
-    // // char *value;
-    // // Entry<char*, char*>* entry2;
-    // // for (int i = 0; i < maxTime; i++) {
+    // SkipList<char*, char*> skipList;
+    // int maxTime = 10000;
+    // char *key;
+    // char *value;
+    // Entry<char*, char*>* entry2;
+    // for (int i = 0; i < maxTime; i++) {
         
-    // //     skipList.Insert(std::move(*entry2));
-    // //     free(entry2);
-    // //     ASSERT_NE(skipList.Contains(key2), nullptr);
-    // //     ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
-    // // }
+    //     skipList.Insert(std::move(*entry2));
+    //     free(entry2);
+    //     ASSERT_NE(skipList.Contains(key2), nullptr);
+    //     ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
+    // }
 }
 
 

@@ -11,10 +11,12 @@ public:
 };
 
 struct FileOptions {
+    FileOptions() {}
+    FileOptions(uint32_t fid, const std::string& dir, int flag, int max_sz): 
+        FID_(fid), dir_(dir), flag_(flag), max_sz_(max_sz) {}
     uint32_t FID_;
     std::string file_name_;
     std::string dir_;
-    std::string path_;
     int flag_;
     int max_sz_;
 };
@@ -31,6 +33,7 @@ public:
 	virtual RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) = 0;
     virtual RC Bytes(uint64_t offset, int64_t size, char*& mmap_addr) = 0;
     virtual RC get_mmap_ptr(char*& mmap_data) = 0;
+    virtual RC append(uint64_t offset, std::string str) = 0;
     
 	// Slice(offset int) []byte
 };

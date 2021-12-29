@@ -32,7 +32,7 @@ include_directories(
 function(meta_test test_file)
     get_filename_component(test_target_name "${test_file}" NAME_WE)
     add_executable("${test_target_name}" "")
-    target_sources("${test_target_name}" PRIVATE  "${test_file}" crc32c.cc file/mmapfile.cpp)
+    target_sources("${test_target_name}" PRIVATE  "${test_file}" crc32c.cc codec.cpp file/mmapfile.cpp)
     target_link_libraries("${test_target_name}" gmock gtest nlohmann_json::nlohmann_json proto_gen_cxx)
     add_test(NAME "${test_target_name}" COMMAND "${test_target_name}")
 endfunction(meta_test)
@@ -41,7 +41,7 @@ meta_test("skipListsTest.cpp")
 meta_test("lsm_test.cpp")
 meta_test("bloomFilterTest.cpp")
 meta_test("memtable_test.cpp")
-
+meta_test("recovery_test.cpp")
 
 execute_process (
     COMMAND bash -c "rm -rf work_test*"

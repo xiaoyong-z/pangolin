@@ -9,12 +9,14 @@
 #include <condition_variable>
 #include <thread>
 #include "gtest/gtest.h"
-#include "memtable.h"
-typedef uint64_t Key;
+#include "lsm.h"
 
-TEST(MemTableTest, BasicTest) {
-    std::shared_ptr<Options> opt = std::make_shared<Options>("../work_test", 283, 1024, 1024, 0.01);
-    
+TEST(RecoveryTest, BasicTest) {
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data", 283, 1024, 1024, 0.01);
+    LSM* lsm = LSM::NewLSM(opt);
+    // std::unique_ptr<LSM> lsm =  
+
+
     std::string file_name_ = opt->work_dir_ + "00000" + std::to_string(0) + ".mem";
     std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
     file_opt->file_name_ = file_name_;

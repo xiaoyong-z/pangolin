@@ -6,6 +6,7 @@
 #include "options.h"
 #include "slice.h"
 #include "coding.h"
+#include "crc32c.h"
 
 
 #define SSTABLE_SIZE_LEN 8
@@ -21,6 +22,10 @@ public:
 
     static uint64_t align(uint64_t size) {
         return (size / ALIGN_NUM) * ALIGN_NUM + ((size % ALIGN_NUM == 0) ? 0 : ALIGN_NUM);
+    }
+
+    static inline std::string filePathJoin(const std::string& path, uint64_t fid, const std::string& postfix) {
+        return path + "/" + std::to_string(fid) + "." + postfix;
     }
 };
 #endif

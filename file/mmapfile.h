@@ -179,6 +179,26 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
+    RC append(uint64_t offset, std::string str) {
+        if (mmap_data_ == nullptr) {
+            LOG("mmap is not initialized: %s", filename_.c_str());
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
+        }
+        uint64_t size = str.size();
+        if (offset + size > map_size_) {
+            const uint64_t oneGB = 1 << 30;
+            uint64_t growBy = map_size_;
+            growBy = std::min(growBy, oneGB);
+            growBy = std::max(growBy, size);
+            RC result = truncate(growBy + map_size_);
+            if (result != RC::SUCCESS) {
+                return result;
+            }
+        }
+        memmove(mmap_data_ + offset, str.data(), str.size());
+        return RC::SUCCESS;
+    }
+
     RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) {
         if (mmap_data_ == nullptr) {
             LOG("mmap is not initialized: %s", filename_.c_str());
@@ -196,7 +216,8 @@ class MmapFile: public File{
             }
         }
         uint64_t *ptr = reinterpret_cast<uint64_t*>(mmap_data_);
-        ptr[start] = size;
+        ptr[offset] = size;
+        free_addr = reinterpret_cast<char*>(ptr + start);
         // *(uint64_t*)mmap_data_[start] = size;
         return RC::SUCCESS;
     } 
