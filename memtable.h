@@ -13,13 +13,9 @@ public:
 
     MemTable(WALFile* wal_file, SkipList* skiplist): 
         wal_file_(wal_file), skipList_(skiplist){};
-
-    static RC OpenWALFiles(std::shared_ptr<FileOptions> file_opt) {
-        
-    }
     
     RC set(Entry* entry) {
-        RC result = wal_file_->Write(entry);
+        RC result = wal_file_->write(entry);
         if (result != RC::SUCCESS) {
             return result;
         }
@@ -29,6 +25,12 @@ public:
 
     RC get(const Slice& key, Entry& entry) {
         return skipList_->contains(key, entry);
+    }
+
+    RC updateList() {
+        if (wal_file_.get() == nullptr || wal_file_.get() == nullptr) {
+            return RC::MEMTABLE_UNINTIALIZE_FAIL;
+        }
     }
 
     std::unique_ptr<WALFile> wal_file_;

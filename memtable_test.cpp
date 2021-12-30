@@ -22,7 +22,7 @@ TEST(MemTableTest, BasicTest) {
     file_opt->flag_ = O_CREAT | O_RDWR;
     file_opt->max_sz_ = int(opt->ssTable_max_sz_);
 
-    WALFile* wal_ptr = WALFile::NewWALFile(file_opt);
+    WALFile* wal_ptr = WALFile::newWALFile(file_opt);
     if (wal_ptr == nullptr) {
         printf("wal file create failed");
         return;

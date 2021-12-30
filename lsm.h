@@ -26,14 +26,25 @@ public:
 	}
 
 	static RC recoveryWAL(const std::shared_ptr<Options>& options, std::shared_ptr<MemTable>& memtable, 
-		std::vector<std::shared_ptr<MemTable>> immutables, LevelManager* level_manager) {
+		std::vector<std::shared_ptr<MemTable>>& immutables, LevelManager* level_manager) {
 
         bool has_wal_file = false;
-        std::vector<std::string> wal_file_names;
+        std::map<int, std::string> wal_file_map;
         for (const auto & entry : std::filesystem::directory_iterator(options->work_dir_)) {
             has_wal_file = true;
-            std::cout << entry.path() << std::endl;
+			const std::string& path = entry.path().string();
+			int suffix_position = path.find_last_of('.');
+			int last_slash_postion = path.find_last_of("/");
+			if (path.substr(suffix_position + 1) == "wal") {
+				wal_file_map.emplace(std::stoi(path.substr(last_slash_postion + 1, suffix_position - last_slash_postion - 1)), path);
+				// wal_file_names.push_back(path);
+			}
         }
+
+		for (const auto & iterator: wal_file_map) {
+			immutables.push_back(openMemTable(options, iterator.first));
+			// std::cout << ite.second << std::endl;
+		}
 
 		memtable = newMemTable(options, level_manager);   
         return RC::SUCCESS;
@@ -44,10 +55,22 @@ public:
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
-		WALFile* wal_file = WALFile::NewWALFile(file_opt);
+		WALFile* wal_file = WALFile::newWALFile(file_opt);
 		assert(wal_file != nullptr);
 		SkipList* skiplist = new SkipList();
 		return std::make_shared<MemTable>(wal_file, skiplist); 
+	}
+
+	static std::shared_ptr<MemTable> openMemTable(const std::shared_ptr<Options>& options, const uint32_t fid) {
+		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_RDONLY, options->ssTable_max_sz_);
+		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
+		WALFile* wal_file = WALFile::newWALFile(file_opt);
+		assert(wal_file != nullptr);
+		SkipList* skiplist = new SkipList();
+		std::shared_ptr<MemTable> memTable = std::make_shared<MemTable>(wal_file, skiplist);
+		memTable->updateList();
+
+		return nullptr;
 	}
 
 	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options){

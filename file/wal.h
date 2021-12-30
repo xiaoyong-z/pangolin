@@ -15,7 +15,7 @@ class WALFile {
 private:
     WALFile(MmapFile* mmap_file): file_(mmap_file), offset_(0) {}
 public:
-    static WALFile* NewWALFile(const std::shared_ptr<FileOptions>& opt) {
+    static WALFile* newWALFile(const std::shared_ptr<FileOptions>& opt) {
         MmapFile* mmap_file = MmapFile::NewMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
         if (mmap_file == nullptr) {
             return nullptr;
@@ -31,7 +31,7 @@ public:
         file_->close();
     }
 
-    RC Write(Entry* entry) {
+    RC write(Entry* entry) {
         std::unique_lock<std::shared_mutex> lock(mutex_);
         if (file_ == nullptr) {
             return RC::WAL_UNINTIALIZE;
