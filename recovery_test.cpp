@@ -13,26 +13,7 @@
 
 TEST(RecoveryTest, BasicTest) {
     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data", 283, 1024, 1024, 0.01);
-    LSM* lsm = LSM::NewLSM(opt);
-    // std::unique_ptr<LSM> lsm =  
-
-
-    std::string file_name_ = opt->work_dir_ + "00000" + std::to_string(0) + ".mem";
-    std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
-    file_opt->file_name_ = file_name_;
-    file_opt->dir_ = opt->work_dir_;
-    file_opt->flag_ = O_CREAT | O_RDWR;
-    file_opt->max_sz_ = int(opt->ssTable_max_sz_);
-
-    WALFile* wal_ptr = WALFile::NewWALFile(file_opt);
-    if (wal_ptr == nullptr) {
-        printf("wal file create failed");
-        return;
-    }
-    std::unique_ptr<WALFile> wal(wal_ptr);
-
-    std::unique_ptr<SkipList> sl = std::make_unique<SkipList>();
-    MemTable memtable(std::move(wal), std::move(sl));
+    LSM* lsm = LSM::newLSM(opt);
 
     std::string key1 = "key1";
     std::string value1 = "value1";
@@ -51,17 +32,17 @@ TEST(RecoveryTest, BasicTest) {
     Entry entry3(skey1, svalue3);
     Entry result;
 
-    ASSERT_EQ(memtable.set(&entry1), RC::SUCCESS);
-    ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
+    ASSERT_EQ(lsm->set(&entry1), RC::SUCCESS);
+    ASSERT_EQ(lsm->get(skey1, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value1);
 
 
-    ASSERT_EQ(memtable.set(&entry2), RC::SUCCESS);
-    ASSERT_EQ(memtable.get(skey2, result), RC::SUCCESS);
+    ASSERT_EQ(lsm->set(&entry2), RC::SUCCESS);
+    ASSERT_EQ(lsm->get(skey2, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value2);
 
-    ASSERT_EQ(memtable.set(&entry3), RC::SUCCESS);
-    ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
+    ASSERT_EQ(lsm->set(&entry3), RC::SUCCESS);
+    ASSERT_EQ(lsm->get(skey1, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value3);
 
     Arena::Instance()->free();

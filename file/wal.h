@@ -24,7 +24,7 @@ public:
         return wal_file;
     }
 
-    RC Close() {
+    RC close() {
         if (file_ == nullptr) {
             return RC::WAL_UNINTIALIZE;
         }
@@ -37,10 +37,14 @@ public:
             return RC::WAL_UNINTIALIZE;
         }
         std::string codec_entry;
-        const size_t codec_entry_size = WalCodec(entry, codec_entry);
+        const size_t codec_entry_size = walCodec(entry, codec_entry);
         RC result = file_->append(offset_, codec_entry);
         offset_ += codec_entry.size();
         return result;
+    }
+
+    uint64_t size() {
+        return offset_;
     }
 
     std::unique_ptr<File> file_;

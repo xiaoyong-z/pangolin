@@ -42,14 +42,14 @@ class BloomFilter {
         return RC::SUCCESS;
     }
 
-    static bool Contains(const char* key, const std::string& filter) {
+    static bool contains(const char* key, const std::string& filter) {
         if (filter.size() < 2) {
             return false;
         }
         uint32_t nBytes = filter.size() - 1;
         char k = filter[nBytes];
         uint32_t nBits = nBytes * 8;
-        uint32_t h = Hash(key);
+        uint32_t h = hash(key);
         uint32_t delta = h >> 17 | h << 15;
         for (int j = 0; j < k; j++) {
             uint32_t bitPos = h % (uint32_t)(nBits);
@@ -67,12 +67,12 @@ class BloomFilter {
         return (int)std::ceil((double)size / (double)numEntries);
     }
 
-    static uint32_t Hash(const char* key) {
+    static uint32_t hash(const char* key) {
         //return xxh32::hash(key, strlen(key), seed);
-        return LevelDBHash(key, strlen(key), seed);
+        return levelDBHash(key, strlen(key), seed);
     }
 
-    static uint32_t LevelDBHash(const char* data, size_t n, uint32_t seed) {
+    static uint32_t levelDBHash(const char* data, size_t n, uint32_t seed) {
         // Similar to murmur hash
         const uint32_t m = 0xc6a4a793;
         const uint32_t r = 24;
@@ -81,7 +81,7 @@ class BloomFilter {
 
         // Pick up four bytes at a time
         while (data + 4 <= limit) {
-            uint32_t w = DecodeFix32(data);
+            uint32_t w = decodeFix32(data);
             data += 4;
             h += w;
             h *= m;

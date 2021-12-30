@@ -9,7 +9,7 @@
 class LevelManager;
 class LevelHandler {
 public:
-    RC level0Get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+    RC level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
         for (size_t i = 0; i < tables_.size(); i++) {
             if (tables_[i]->get(key, entry, opt) == RC::SUCCESS) {
                 entry.key_ = key;
@@ -19,7 +19,7 @@ public:
         return RC::LEVELS_KEY_NOT_FOUND_IN_CUR_LEVEL;
     }
 
-    RC levelNGet(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+    RC levelNGet(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
 
         return RC::SUCCESS;
     }
@@ -37,12 +37,12 @@ public:
         levels_.emplace_back();
     }
 
-    RC get(const std::string& key, Entry& entry) {
+    RC get(const Slice& key, Entry& entry) {
         RC result = levels_[0].level0Get(key, entry, opt_);
         return RC::SUCCESS;
     }
 
-    RC flush(const MemTable& immutable) {
+    RC flush(const std::shared_ptr<MemTable>& immutable) {
         uint32_t file_id = cur_file_id_.fetch_add(1);
         Table* table_raw = Table::NewTable(opt_->work_dir_, file_id, opt_->ssTable_max_sz_);
         if (table_raw == nullptr) {
@@ -50,7 +50,7 @@ public:
         }
         std::shared_ptr<Table> table(table_raw);
         std::shared_ptr<Builder> builder = std::make_shared<Builder>(opt_);
-        std::unique_ptr<SkipListIterator> iterator(immutable.skipList_->NewIterator());
+        std::unique_ptr<SkipListIterator> iterator(immutable->skipList_->newIterator());
         for (; iterator->hasNext() ; iterator->next()) {
             builder->insert(iterator->get());
         }

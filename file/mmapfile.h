@@ -161,7 +161,7 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
-    RC Bytes(uint64_t offset, int64_t size, char*& mmap_addr) {
+    RC bytes(uint64_t offset, int64_t size, char*& mmap_addr) {
         if (mmap_data_ == nullptr) {
             LOG("mmap is not initialized: %s", filename_.c_str());
             return RC::MMAPFILE_MMAP_UNINITIALIZE;

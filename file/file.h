@@ -31,7 +31,7 @@ public:
     virtual RC fdelete() = 0;
     virtual RC NewReader(const std::shared_ptr<FileReader>& reader) = 0;
 	virtual RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) = 0;
-    virtual RC Bytes(uint64_t offset, int64_t size, char*& mmap_addr) = 0;
+    virtual RC bytes(uint64_t offset, int64_t size, char*& mmap_addr) = 0;
     virtual RC get_mmap_ptr(char*& mmap_data) = 0;
     virtual RC append(uint64_t offset, std::string str) = 0;
     

@@ -6,11 +6,13 @@
 #include "util.h"
 #include "skipLists.h"
 class MemTable {
+    friend class LSM;
 public: 
     MemTable(std::unique_ptr<WALFile>&& wal_file, std::unique_ptr<SkipList>&& skiplist): 
         wal_file_(std::move(wal_file)), skipList_(std::move(skiplist)){};
 
-    
+    MemTable(WALFile* wal_file, SkipList* skiplist): 
+        wal_file_(wal_file), skipList_(skiplist){};
 
     static RC OpenWALFiles(std::shared_ptr<FileOptions> file_opt) {
         
@@ -21,12 +23,12 @@ public:
         if (result != RC::SUCCESS) {
             return result;
         }
-        result = skipList_->Insert(entry);
+        result = skipList_->insert(entry);
         return RC::SUCCESS;
     }
 
-    RC get(const Slice& key, Entry& result) {
-        return skipList_->Contains(key, result);
+    RC get(const Slice& key, Entry& entry) {
+        return skipList_->contains(key, entry);
     }
 
     std::unique_ptr<WALFile> wal_file_;

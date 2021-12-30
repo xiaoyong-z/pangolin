@@ -34,22 +34,22 @@ std::string RandString(int len) {
 
 
 //     const Entry<TestMove, TestMove>* result;
-//     ASSERT_EQ(skipList.Contains(c, result), RC::SKIPLIST_NOT_FOUND);
+//     ASSERT_EQ(skipList.contains(c, result), RC::SKIPLIST_NOT_FOUND);
 
-//     skipList.Insert(std::move(entry1));
+//     skipList.insert(std::move(entry1));
 
 //     TestMove d(2.3, 1);
 
-//     ASSERT_EQ(skipList.Contains(a, result), RC::SUCCESS);
+//     ASSERT_EQ(skipList.contains(a, result), RC::SUCCESS);
 //     ASSERT_EQ(result->value_, d);
 
 //     TestMove e(1.2, 1);
 //     TestMove f(2.111, 10);
 
 //     Entry<TestMove, TestMove> entry2(std::move(e), std::move(f));
-//     std::cout << "Update before" << std::endl;
-//     skipList.Insert(std::move(entry2));
-//     std::cout << "Update After" << std::endl;
+//     std::cout << "update before" << std::endl;
+//     skipList.insert(std::move(entry2));
+//     std::cout << "update After" << std::endl;
     
 // }
 
@@ -72,18 +72,18 @@ TEST(SkipTest, BasicCRUD) {
     Entry entry3(skey1, svalue3);
     Entry result;
 
-    ASSERT_EQ(skipList.Contains(skey2, result), RC::SKIPLIST_NOT_FOUND);
+    ASSERT_EQ(skipList.contains(skey2, result), RC::SKIPLIST_NOT_FOUND);
 
-    skipList.Insert(&entry1);
-    ASSERT_EQ(skipList.Contains(skey1, result), RC::SUCCESS);
+    skipList.insert(&entry1);
+    ASSERT_EQ(skipList.contains(skey1, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value1);
 
-    skipList.Insert(&entry2);
-    ASSERT_EQ(skipList.Contains(skey2, result), RC::SUCCESS);
+    skipList.insert(&entry2);
+    ASSERT_EQ(skipList.contains(skey2, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value2);
 
-    skipList.Insert(&entry3);
-    ASSERT_EQ(skipList.Contains(skey1, result), RC::SUCCESS);
+    skipList.insert(&entry3);
+    ASSERT_EQ(skipList.contains(skey1, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value3);
 
     Arena::Instance()->free();
@@ -109,9 +109,9 @@ TEST(SkipTest, BenchmarkCRUD) {
         Slice value(value_ptr, str.size());
 
         entry.reset(key, value);
-        skipList.Insert(&entry);
-        // RC rc = skipList.Contains(key, result);
-        ASSERT_EQ(skipList.Contains(key, result), RC::SUCCESS);
+        skipList.insert(&entry);
+        // RC rc = skipList.contains(key, result);
+        ASSERT_EQ(skipList.contains(key, result), RC::SUCCESS);
         ASSERT_EQ(result.value_.compare(value), 0);
         delete[] key_ptr;
         delete[] value_ptr;
@@ -164,7 +164,7 @@ void SkipListInsert(SkipList &skipList, int i, int maxLen){
 
         entry.reset(key, value);
         write_mutex.lock();
-        skipList.Insert(&entry);
+        skipList.insert(&entry);
         write_mutex.unlock();
         delete[] key_ptr;
         delete[] value_ptr;
@@ -185,7 +185,7 @@ void SkipListContain(SkipList &skipList, int i, int maxLen){
         memmove(value_ptr, str.data(), str.size());
         Slice value(value_ptr, str.size());
         Entry result;
-        ASSERT_EQ (skipList.Contains(key, result), RC::SUCCESS);
+        ASSERT_EQ (skipList.contains(key, result), RC::SUCCESS);
         ASSERT_EQ (result.value_.compare(value), 0);
         delete[] key_ptr;
         delete[] value_ptr;

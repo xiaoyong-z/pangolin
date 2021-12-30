@@ -105,10 +105,10 @@ TEST(LSM_TEST, basic) {
     // Entry<char*, char*>* entry2;
     // for (int i = 0; i < maxTime; i++) {
         
-    //     skipList.Insert(std::move(*entry2));
+    //     skipList.insert(std::move(*entry2));
     //     free(entry2);
-    //     ASSERT_NE(skipList.Contains(key2), nullptr);
-    //     ASSERT_EQ(strcmp(skipList.Contains(key2)->value_, value2), 0);
+    //     ASSERT_NE(skipList.contains(key2), nullptr);
+    //     ASSERT_EQ(strcmp(skipList.contains(key2)->value_, value2), 0);
     // }
 }
 

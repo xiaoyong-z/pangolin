@@ -15,7 +15,7 @@ struct SkipNode {
     // SkipNode(double score, int height, Entry&& elem): score_(score), elem_(std::forward<Entry>(elem)), height_(height) {
     //     nexts_ = new std::atomic<SkipNode*>[height_ + 1];
     //     for (int i = 0; i < height_ + 1; i++) {
-    //         SetNext(i, nullptr);
+    //         setNext(i, nullptr);
     //     }
     // }
 
@@ -23,46 +23,46 @@ struct SkipNode {
         key_(nullptr), key_len_(0), value_(nullptr), 
         value_len_(0), score_(score), height_(height) {
         for (int i = 0; i < height_ + 1; i++) {
-            SetNext(i, nullptr);
+            setNext(i, nullptr);
         }
     }
     
     // SkipNode(double score, int height): score_(score), height_(height){
     //     nexts_ = new std::atomic<SkipNode*>[height_ + 1];
     //     for (int i = 0; i < height_ + 1; i++) {
-    //         SetNext(i, nullptr);
+    //         setNext(i, nullptr);
     //     }
     // }
 
     ~SkipNode() {
-        // if (Next(0)) {
-        //     delete Next(0);
-        //     SetNext(0, nullptr);
+        // if (next(0)) {
+        //     delete next(0);
+        //     setNext(0, nullptr);
         // }
         // delete[] nexts_;
         // nexts_ = nullptr;
     }
 
-    SkipNode* Next(int n) {
+    SkipNode* next(int n) {
         assert(n >= 0);
         // Use an 'acquire load' so that we observe a fully initialized
         // version of the returned Node.
         return nexts_[n].load(std::memory_order_acquire);
     }
 
-    void SetNext(int n, SkipNode* x) {
+    void setNext(int n, SkipNode* x) {
         assert(n >= 0);
         // Use a 'release store' so that anybody who reads through this
         // pointer observes a fully initialized version of the inserted node.
         nexts_[n].store(x, std::memory_order_release);
     }
 
-    SkipNode* NoBarrier_Next(int n) {
+    SkipNode* noBarrier_Next(int n) {
         assert(n >= 0);
         return nexts_[n].load(std::memory_order_relaxed);
     }
 
-    void NoBarrier_SetNext(int n, SkipNode* x) {
+    void noBarrier_SetNext(int n, SkipNode* x) {
         assert(n >= 0);
         nexts_[n].store(x, std::memory_order_relaxed);
     }
@@ -79,15 +79,15 @@ private:
 };
 
 // template<typename std::string>
-// double CalculateKeyScore(const std::string& key) {
+// double calculateKeyScore(const std::string& key) {
 //     return 0;
 // }
 
-// double CalculateKeyScore(const TestMove& key) {
+// double calculateKeyScore(const TestMove& key) {
 //     return key.score_;
 // }
 
-// double CalculateKeyScore(const char* key) {
+// double calculateKeyScore(const char* key) {
 //     int len = strlen(key);
 //     if (len > 8) {
 //         len = 8;
@@ -100,7 +100,7 @@ private:
 //     return double(hash);
 // }
 
-double CalculateKeyScore(const Slice& key) {
+double calculateKeyScore(const Slice& key) {
     size_t len = key.size(); 
     const char* data = key.data();
     if (len > 8) {
@@ -115,19 +115,19 @@ double CalculateKeyScore(const Slice& key) {
 }
 
 // template<typename std::string>
-// int CompareKey(const std::string& key1, const std::string& key2) {
+// int compareKey(const std::string& key1, const std::string& key2) {
 //     return 0;
 // }
 
-// inline int CompareKey(const TestMove& key1, const TestMove& key2) {
+// inline int compareKey(const TestMove& key1, const TestMove& key2) {
 //     return key1.a_ < key2.a_;
 // }
 
-// inline int CompareKey(const char* key1, const char* key2) {
+// inline int compareKey(const char* key1, const char* key2) {
 //     return strcmp(key1, key2);
 // }
 
-inline int CompareKey(const Slice& key1, const Slice& key2) {
+inline int compareKey(const Slice& key1, const Slice& key2) {
     return key1.compare(key2);
 }
 
@@ -142,7 +142,7 @@ public:
         return it_ != nullptr;
     }
     void next() {
-        it_ = it_->Next(0);
+        it_ = it_->next(0);
     } 
 
     const Entry& get() {
@@ -165,78 +165,78 @@ public:
     SkipList() {
         max_height_ = 0;
         arena_ = Arena::Instance();
-        header_ = AllocateNewNode(-1, SKIPLIST_MAX_HEIGHT, nullptr);
+        header_ = allocateNewNode(-1, SKIPLIST_MAX_HEIGHT, nullptr);
 
         // header_ = new SkipNode(-1, SKIPLIST_MAX_HEIGHT);
     }
 
     ~SkipList() {
-        // if (header_->Next(0)) {
-        //     delete header_->Next(0);
-        //     header_->SetNext(0, nullptr);
+        // if (header_->next(0)) {
+        //     delete header_->next(0);
+        //     header_->setNext(0, nullptr);
         // }
         // delete header_;
         // header_ = nullptr;
     }
 
-    void Update(SkipNode* node, Entry* elem) {
+    void update(SkipNode* node, Entry* elem) {
         std::lock_guard guard(update_mutex_);
-        node->value_ = AllocateNewValue(elem->value_, elem->expires_at_);
+        node->value_ = allocateNewValue(elem->value_, elem->expires_at_);
         node->value_len_ = elem->value_.size();
     }
     
-    SkipNode* AllocateNewNode(const double score, const int height, Entry* elem) {
+    SkipNode* allocateNewNode(const double score, const int height, Entry* elem) {
         uint32_t size = sizeof(SkipNode) + height * sizeof(std::atomic<SkipNode*>);
         char* addr = arena_->allocateAlign(size);
         SkipNode* node = new(addr) SkipNode(score, height);
         if (elem != nullptr) {
-            node->key_ = AllocateNewKey(elem->key_);
+            node->key_ = allocateNewKey(elem->key_);
             node->key_len_ = elem->key_.size();
 
-            node->value_ = AllocateNewValue(elem->value_, elem->expires_at_);
+            node->value_ = allocateNewValue(elem->value_, elem->expires_at_);
             node->value_len_ = elem->value_.size();
         }
         return node;
     }
 
-    char* AllocateNewKey(const Slice& key) {
+    char* allocateNewKey(const Slice& key) {
         size_t size = key.size();
         char* addr = arena_->allocateAlign(size);
         memmove(addr, key.data(), size);
         return addr;
     }
 
-    inline Slice GetKey(char* key_data, uint32_t key_len) const{
+    inline Slice getKey(char* key_data, uint32_t key_len) const{
         Slice key(key_data, key_len);
         return key; 
     }
 
-    char* AllocateNewValue(const Slice& value, const uint64_t expire_at) {
+    char* allocateNewValue(const Slice& value, const uint64_t expire_at) {
         size_t size = value.size() + sizeof(uint64_t);
         char* addr = arena_->allocateAlign(size);
         memmove(addr, value.data(), value.size());
-        EncodeFix64(addr + value.size(), expire_at);
+        encodeFix64(addr + value.size(), expire_at);
         return addr;
     }
 
-    inline ValueStruct GetValue(char* value_ptr, uint32_t value_len) const{
-        ValueStruct value(value_ptr, value_len, DecodeFix64(value_ptr + value_len));
+    inline ValueStruct getValue(char* value_ptr, uint32_t value_len) const{
+        ValueStruct value(value_ptr, value_len, decodeFix64(value_ptr + value_len));
         return value; 
     }
 
-    SkipListIterator* NewIterator(){
+    SkipListIterator* newIterator(){
         SkipListIterator* iterator = new SkipListIterator();
-        iterator->it_ = header_->Next(0);
+        iterator->it_ = header_->next(0);
         iterator->skip_list_ = this;
         return iterator;
     }
 
-    int GetMaxHeight() {
+    int getMaxHeight() {
         return max_height_.load(std::memory_order_relaxed);
     }
 
 
-    int RandomHeight() {
+    int randomHeight() {
         int level = 0;
         while (random() % 4 == 0)
             level += 1;
@@ -245,7 +245,7 @@ public:
     
     
     double CalculateScore(const Slice& key) {
-        return CalculateKeyScore(key);
+        return calculateKeyScore(key);
     }
 
     inline int Compare(SkipNode* node, const Slice& keyb, double score) const {
@@ -254,25 +254,25 @@ public:
         } else if (node->score_ < score) {
             return -1;
         } else {
-            const Slice keya = GetKey(node->key_, node->key_len_);
-            return CompareKey(keya, keyb);
+            const Slice keya = getKey(node->key_, node->key_len_);
+            return compareKey(keya, keyb);
         }
     }
 
-    RC Contains(const Slice& key, Entry& result) {
+    RC contains(const Slice& key, Entry& result) {
         // std::lock_guard<std::mutex> lock_guard(mutex);
-        double key_score = CalculateKeyScore(key);
+        double key_score = calculateKeyScore(key);
         SkipNode* cur_node = header_;
-        int cur_height = GetMaxHeight();
+        int cur_height = getMaxHeight();
         while (true) {
-            SkipNode* next_node = cur_node->Next(cur_height);
+            SkipNode* next_node = cur_node->next(cur_height);
             if (next_node != nullptr && Compare(next_node, key, key_score) < 0) {
                 cur_node = next_node;
             } else {
                 if (cur_height == 0) {
                     if (next_node != nullptr && Compare(next_node, key, key_score) == 0) {
-                        const Slice key_find = GetKey(next_node->key_, next_node->key_len_);
-                        const ValueStruct value_find = GetValue(next_node->value_, next_node->value_len_);
+                        const Slice key_find = getKey(next_node->key_, next_node->key_len_);
+                        const ValueStruct value_find = getValue(next_node->value_, next_node->value_len_);
                         result.reset(key_find, value_find);
                         return RC::SUCCESS;
                     }
@@ -286,22 +286,22 @@ public:
     }
     
 
-    RC Insert(Entry* elem) {
+    RC insert(Entry* elem) {
         SkipNode* prev_[SKIPLIST_MAX_HEIGHT];
         double key_score = CalculateScore(elem->key_);
         // std::cout << "score:" << key_score << std::endl;
         SkipNode* cur_node = header_;
 
-        int cur_height = GetMaxHeight();
+        int cur_height = getMaxHeight();
         while (true) {
-            SkipNode* next_node = cur_node->Next(cur_height);
+            SkipNode* next_node = cur_node->next(cur_height);
             if (next_node != nullptr && Compare(next_node, elem->key_, key_score) < 0) {
                 cur_node = next_node;
             } else {
                 prev_[cur_height] = cur_node;
                 if (cur_height == 0) {
                     if (next_node != nullptr && Compare(next_node, elem->key_, key_score) == 0) {
-                        Update(next_node, elem);
+                        update(next_node, elem);
                         return RC::SUCCESS;
                     }
                     break; 
@@ -311,19 +311,19 @@ public:
             }
         }
 
-        int random_height = RandomHeight();
+        int random_height = randomHeight();
 
-        if (random_height > GetMaxHeight()) {
-            for (int i = GetMaxHeight() + 1; i <= random_height; i++) {
+        if (random_height > getMaxHeight()) {
+            for (int i = getMaxHeight() + 1; i <= random_height; i++) {
                 prev_[i] = header_;
             }
             max_height_.store(random_height, std::memory_order_relaxed);
         }
 
-        SkipNode* skip_node = AllocateNewNode(key_score, random_height, elem);
+        SkipNode* skip_node = allocateNewNode(key_score, random_height, elem);
         for (int i = 0; i <= random_height; i++) {
-            skip_node->NoBarrier_SetNext(i, prev_[i]->NoBarrier_Next(i));
-            prev_[i]->SetNext(i, skip_node);
+            skip_node->noBarrier_SetNext(i, prev_[i]->noBarrier_Next(i));
+            prev_[i]->setNext(i, skip_node);
         }
         return RC::SUCCESS;
     }

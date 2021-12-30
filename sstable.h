@@ -57,7 +57,7 @@ class SSTable {
 private:
     SSTable(MmapFile* mmap_file): file_(mmap_file){}
 public:
-    static SSTable* NewSSTableFile(const std::shared_ptr<FileOptions>& opt) {
+    static SSTable* newSSTableFile(const std::shared_ptr<FileOptions>& opt) {
         MmapFile* mmap_file = MmapFile::NewMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
         if (mmap_file == nullptr) {
             return nullptr;
@@ -66,8 +66,8 @@ public:
         return sstable;
     }
 
-    RC Bytes(uint64_t offset, uint64_t size, char*& mmap_addr) {
-        return file_->Bytes(offset, size, mmap_addr);
+    RC bytes(uint64_t offset, uint64_t size, char*& mmap_addr) {
+        return file_->bytes(offset, size, mmap_addr);
     }
     
     RC init() {
@@ -77,13 +77,13 @@ public:
             return result;
         }
         raw_ptr_ = mmap_ptr;
-        uint64_t sstable_len = DecodeFix64(mmap_ptr);
+        uint64_t sstable_len = decodeFix64(mmap_ptr);
         mmap_ptr += sstable_len;
-        uint32_t check_sum_len = DecodeFix32(mmap_ptr - sizeof(uint32_t));
+        uint32_t check_sum_len = decodeFix32(mmap_ptr - sizeof(uint32_t));
         mmap_ptr -= sizeof(uint32_t);
-        uint32_t check_sum = DecodeFix32(mmap_ptr - check_sum_len);
+        uint32_t check_sum = decodeFix32(mmap_ptr - check_sum_len);
         mmap_ptr -= check_sum_len;
-        uint64_t index_len = DecodeFix64(mmap_ptr - sizeof(uint64_t));
+        uint64_t index_len = decodeFix64(mmap_ptr - sizeof(uint64_t));
         mmap_ptr -= sizeof(uint64_t);
 
         std::string index(mmap_ptr - index_len, index_len);       
@@ -107,14 +107,14 @@ public:
 
         std::string block_content(raw_ptr_ + SSTABLE_SIZE_LEN + max_block_offset, max_block_len);
         
-        uint32_t block_check_sum_len = DecodeFix32(block_content.data() + block_content.size() - 4);
-        uint32_t block_check_sum = DecodeFix32(block_content.data() + block_content.size() - 4 - block_check_sum_len);
+        uint32_t block_check_sum_len = decodeFix32(block_content.data() + block_content.size() - 4);
+        uint32_t block_check_sum = decodeFix32(block_content.data() + block_content.size() - 4 - block_check_sum_len);
         uint32_t block_crc_value = crc32c::Value(block_content.data(), block_content.size() - 4 - block_check_sum_len);
         if (block_crc_value != block_check_sum) {
             return RC::SSTABLE_CRC_FAIL;
         }
-        uint32_t last_offset = DecodeFix32(block_content.data() + block_content.size() - 4 - block_check_sum_len - 8);
-        uint32_t header = DecodeFix32(block_content.data() + last_offset);
+        uint32_t last_offset = decodeFix32(block_content.data() + block_content.size() - 4 - block_check_sum_len - 8);
+        uint32_t header = decodeFix32(block_content.data() + last_offset);
         uint16_t overlap = header;
         uint16_t diff = header >> 16;
         std::string diff_key(block_content.data() + last_offset + 4, diff);
@@ -123,7 +123,7 @@ public:
         return RC::SUCCESS;
     }
 
-    BlockOffsetsIterator* NewIterator(){
+    BlockOffsetsIterator* newIterator(){
         BlockOffsetsIterator* iterator = new BlockOffsetsIterator(block_offset_index_, indexblock_);
         return iterator;
     }

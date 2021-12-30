@@ -16,21 +16,21 @@ public:
             cur_block_ = std::make_shared<Block>();
         }
         if (cur_block_->checkFinish(entry, opt_->block_size_)) {
-            key_count_ += cur_block_->GetKeyCount();
-            cur_block_->Finish();
+            key_count_ += cur_block_->getKeyCount();
+            cur_block_->finish();
             blocks_.push_back(cur_block_);
             cur_block_ = std::make_shared<Block>();
         }
         // cal max version
-        key_hashs_.push_back(BloomFilter::Hash(entry.key_.data()));
+        key_hashs_.push_back(BloomFilter::hash(entry.key_.data()));
         cur_block_->insert(entry);
         return RC::SUCCESS;
     }
 
     RC flush(SSTable* sstable) {
         if (cur_block_ != nullptr) {
-            key_count_ += cur_block_->GetKeyCount();
-            cur_block_->Finish();
+            key_count_ += cur_block_->getKeyCount();
+            cur_block_->finish();
             blocks_.push_back(cur_block_);
         }
         int bits_per_key = BloomFilter::calBitsPerKey(key_count_, opt_->bloom_false_positive_);
@@ -38,12 +38,12 @@ public:
         BloomFilter::createFilter(key_hashs_, filter, bits_per_key);
         std::string indexBlockContent;
         uint64_t block_len = 0;
-        IndexBuilder(filter, indexBlockContent, block_len);
+        indexBuilder(filter, indexBlockContent, block_len);
         uint64_t index_len = indexBlockContent.size();
         uint32_t index_checksum = crc32c::Value(indexBlockContent.data(), index_len);
         uint64_t total_len = block_len + index_len + sizeof(index_checksum) + 4 + 4;
         char* mmap_addr;
-        RC result = sstable->Bytes(0, total_len, mmap_addr);
+        RC result = sstable->bytes(0, total_len, mmap_addr);
         if (result != RC::SUCCESS) {
             filter.clear();
             indexBlockContent.clear();
@@ -59,19 +59,19 @@ public:
         copy_offset += index_len;
 
         std::string index_checksum_str;
-        EncodeFix64(&index_checksum_str, index_len);
-        EncodeFix32(&index_checksum_str, index_checksum);
-        EncodeFix32(&index_checksum_str, sizeof(index_checksum));
+        encodeFix64(&index_checksum_str, index_len);
+        encodeFix32(&index_checksum_str, index_checksum);
+        encodeFix32(&index_checksum_str, sizeof(index_checksum));
         memmove(mmap_addr + copy_offset, index_checksum_str.data(), index_checksum_str.size());
         
         copy_offset += sizeof(index_len) + sizeof(index_checksum) + sizeof(uint32_t);
         std::string sstable_len;
-        EncodeFix64(&sstable_len, copy_offset);
+        encodeFix64(&sstable_len, copy_offset);
         memmove(mmap_addr, sstable_len.data(), sstable_len.size());
         return RC::SUCCESS;
     }
 
-    RC IndexBuilder(const std::string& filter, std::string& content, uint64_t& block_len) {
+    RC indexBuilder(const std::string& filter, std::string& content, uint64_t& block_len) {
         pb::IndexBlock indexblock;
         indexblock.set_key_count(key_count_);
         indexblock.set_max_version(max_version_);

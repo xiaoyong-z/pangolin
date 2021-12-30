@@ -28,7 +28,7 @@ class BloomTest : public testing::Test {
     }
 
     void Add(const std::string& s) { 
-        keys_.push_back(BloomFilter::Hash(s.c_str())); 
+        keys_.push_back(BloomFilter::hash(s.c_str())); 
     }
 
     void Build() {
@@ -57,7 +57,7 @@ class BloomTest : public testing::Test {
         if (!keys_.empty()) {
             Build();
         }
-        return BloomFilter::Contains(s.c_str(), filter_);
+        return BloomFilter::contains(s.c_str(), filter_);
     }
 
     double FalsePositiveRate() {

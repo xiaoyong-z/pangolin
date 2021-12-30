@@ -22,7 +22,7 @@ public:
     
     const std::string get() {
         uint32_t cur_offset = offset_[current_offset_index_];
-        uint32_t header = DecodeFix32(content_.data() + cur_offset);
+        uint32_t header = decodeFix32(content_.data() + cur_offset);
         uint16_t overlap = header;
         uint16_t diff = header >> 16;
         std::string diff_key(content_.data() + cur_offset + 4, diff);
@@ -48,7 +48,7 @@ public:
 private:
     const std::string getKey(uint32_t index) {
         uint32_t cur_offset = offset_[index];
-        uint32_t header = DecodeFix32(content_.data() + cur_offset);
+        uint32_t header = decodeFix32(content_.data() + cur_offset);
         uint16_t overlap = header;
         uint16_t diff = header >> 16;
         std::string diff_key(content_.data() + cur_offset + 4, diff);
@@ -58,7 +58,7 @@ private:
 
     const std::string getValue(uint32_t index) {
         uint32_t cur_offset = offset_[index];
-        uint32_t header = DecodeFix32(content_.data() + cur_offset);
+        uint32_t header = decodeFix32(content_.data() + cur_offset);
         uint16_t diff = header >> 16;
         if (index < offset_.size() - 1) {
             uint32_t next_offset = offset_[index + 1];
@@ -86,13 +86,13 @@ public:
         current_offset_ = block_len;
         uint64_t offset = blockOffset.offset();
         std::string block_content_(sstable->raw_ptr_ + SSTABLE_SIZE_LEN + offset, block_len);
-        uint32_t block_check_sum_len = DecodeFix32(block_content_.data() + block_content_.size() - 4);
-        uint32_t block_check_sum = DecodeFix32(block_content_.data() + block_content_.size() - 4 - block_check_sum_len);
+        uint32_t block_check_sum_len = decodeFix32(block_content_.data() + block_content_.size() - 4);
+        uint32_t block_check_sum = decodeFix32(block_content_.data() + block_content_.size() - 4 - block_check_sum_len);
         uint32_t block_crc_value = crc32c::Value(block_content_.data(), block_content_.size() - 4 - block_check_sum_len);
         assert (block_crc_value == block_check_sum);
-        uint32_t offset_len = DecodeFix32(block_content_.data() + block_content_.size() - 4 - block_check_sum_len - 4);
+        uint32_t offset_len = decodeFix32(block_content_.data() + block_content_.size() - 4 - block_check_sum_len - 4);
         for (uint32_t i = 0; i < offset_len; i++) {
-            offset_.push_back(DecodeFix32(block_content_.data() + block_content_.size() - 4 - block_check_sum_len - 4 - (offset_len - i) * 4));
+            offset_.push_back(decodeFix32(block_content_.data() + block_content_.size() - 4 - block_check_sum_len - 4 - (offset_len - i) * 4));
         }
         base_key_ = blockOffset.base_key();
         content_ = std::move(block_content_);
@@ -117,9 +117,9 @@ public:
             diff_key_index = diffKey(entry.key_);
         }
         uint32_t header = diff_key_index | (base_key_.size() - diff_key_index) << 16;
-        EncodeFix32(&content_, header);
+        encodeFix32(&content_, header);
         content_.append(entry.key_.data() + diff_key_index, base_key_.size() - diff_key_index);
-        EncodeFix64(&content_, entry.expires_at_);
+        encodeFix64(&content_, entry.expires_at_);
         content_.append(entry.value_.data(), entry.value_.size());
 
         offset_.push_back(current_offset_);
@@ -133,22 +133,22 @@ public:
         return estimate_size > max_size;
     }
 
-    inline uint32_t GetKeyCount() {
+    inline uint32_t getKeyCount() {
         return offset_.size();
     }
 
-    void Finish() {
+    void finish() {
         for (size_t i = 0; i < offset_.size(); i++) {
-            EncodeFix32(&content_, offset_[i]);
+            encodeFix32(&content_, offset_[i]);
         }
-        EncodeFix32(&content_, offset_.size());
+        encodeFix32(&content_, offset_.size());
         uint32_t crc = crc32c::Value(content_.data(), content_.size());
-        EncodeFix32(&content_, crc);
-        EncodeFix32(&content_, sizeof(crc));
+        encodeFix32(&content_, crc);
+        encodeFix32(&content_, sizeof(crc));
         current_offset_ = content_.size();
     }
 
-    BlockIterator* NewIterator() {
+    BlockIterator* newIterator() {
         return new BlockIterator(base_key_, offset_, content_, current_offset_ - 4 * offset_.size() - 4 - 4 - CRC_SIZE_LEN);
     }
 

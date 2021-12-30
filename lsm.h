@@ -11,22 +11,22 @@ class LSM {
 
 	}
 public:
-	static LSM* NewLSM(std::shared_ptr<Options> options) {
+	static LSM* newLSM(std::shared_ptr<Options> options) {
 		std::shared_ptr<MemTable> memtable;
 		std::vector<std::shared_ptr<MemTable>> immutables;
 		LSM* lsm = new LSM(options);
 
-		lsm->level_mangaer_.reset(NewLevelManager(options));
+		lsm->level_mangaer_.reset(newLevelManager(options));
 
-		RC result = RecoveryWAL(options, memtable, immutables, lsm->level_mangaer_.get());
+		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_mangaer_.get());
 		if (result != RC::SUCCESS) {
 			
 		}
 		return lsm;
 	}
 
-	static RC RecoveryWAL(const std::shared_ptr<Options>& options, 
-        std::shared_ptr<MemTable>& memtable, std::vector<std::shared_ptr<MemTable>>, LevelManager* level_manager) {
+	static RC recoveryWAL(const std::shared_ptr<Options>& options, std::shared_ptr<MemTable>& memtable, 
+		std::vector<std::shared_ptr<MemTable>> immutables, LevelManager* level_manager) {
 
         bool has_wal_file = false;
         std::vector<std::string> wal_file_names;
@@ -35,26 +35,22 @@ public:
             std::cout << entry.path() << std::endl;
         }
 
-		MemTable* memtable_ptr = NewMemTable(options, level_manager);
-        // memtable = std::make_shared<MemTable>(options);        
+		memtable = newMemTable(options, level_manager);   
         return RC::SUCCESS;
     }
 
-	static MemTable* NewMemTable(const std::shared_ptr<Options>& options, LevelManager* level_manager) {
+	static std::shared_ptr<MemTable> newMemTable(const std::shared_ptr<Options>& options, LevelManager* level_manager) {
         uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
-		
-
-        
-		// std::string file_name_ = opt->work_dir_ + "00000" + std::to_string(0) + ".mem";
-     
-        
-        // wal_file_(std::move(wal_file)), skipList_(std::move(skiplist)){};
+		WALFile* wal_file = WALFile::NewWALFile(file_opt);
+		assert(wal_file != nullptr);
+		SkipList* skiplist = new SkipList();
+		return std::make_shared<MemTable>(wal_file, skiplist); 
 	}
 
-	static LevelManager* NewLevelManager(const std::shared_ptr<Options>& options){
+	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options){
         LevelManager* level_manger = new LevelManager(options);
         // lm.opt_ = opt_
         // // 读取manifest文件构建管理器
@@ -66,7 +62,25 @@ public:
         return level_manger;
     }
 
-	RC Close() {
+	RC set(Entry* entry) {
+		if (memtable_->wal_file_->size() + entry->estimateWalEntrySize() > options_->mem_table_size_) {
+			immutables_.push_back(memtable_);
+			memtable_ = newMemTable(options_, level_mangaer_.get());
+		}
+
+		RC result = memtable_->set(entry);
+		if (result != RC::SUCCESS) {
+			return result;
+		}
+
+		for (size_t i = 0; i < immutables_.size(); i++) {
+			level_mangaer_->flush(immutables_[i]);
+		}
+		immutables_.clear();
+    }
+
+
+	RC close() {
 		RC result;
 		// Todo 
 		// if (memtable_ != nullptr) {
@@ -75,8 +89,20 @@ public:
 		return result;
 	}
 	
-	RC Get() {
-		return RC::SUCCESS;
+	RC get(const Slice& key, Entry& entry) {
+		RC rc = memtable_->get(key, entry);
+		if (rc == RC::SUCCESS) {
+			return rc;
+		}
+
+		for (size_t i = 0; i < immutables_.size(); i++) {
+			rc = memtable_->get(key, entry);
+			if (rc == RC::SUCCESS) {
+				return rc;
+			}
+		}
+
+		return level_mangaer_->get(key, entry);
 	}
 
 

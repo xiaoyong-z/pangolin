@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "slice.h"
+#include "util.h"
 struct ValueStruct {
     ValueStruct(char* value, uint32_t value_len, uint64_t expire_at): value_(value, value_len), expires_at_(expire_at) {}
     Slice value_;
@@ -29,6 +30,10 @@ struct Entry {
     void reset(const Slice& key, const Slice& value){
         key_ = key;
         value_ = value;
+    }
+
+    uint32_t estimateWalEntrySize() {
+        return key_.size() + value_.size() + 8 + 8 + CRC_SIZE_LEN;
     }
 
 
