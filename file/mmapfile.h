@@ -59,7 +59,7 @@ class MmapFile: public File{
         }
         filename_ = filename;
         bool writable = true;
-        if (flag & O_RDONLY) {
+        if (flag == O_RDONLY) {
             writable = false;
         }
         struct stat f_stat;

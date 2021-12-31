@@ -28,8 +28,13 @@ public:
     }
 
     RC updateList() {
-        if (wal_file_.get() == nullptr || wal_file_.get() == nullptr) {
+        if (wal_file_.get() == nullptr || skipList_.get() == nullptr) {
             return RC::MEMTABLE_UNINTIALIZE_FAIL;
+        }
+
+        
+        if (wal_file_.get() == nullptr) {
+            
         }
     }
 
