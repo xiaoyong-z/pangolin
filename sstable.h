@@ -58,7 +58,7 @@ private:
     SSTable(MmapFile* mmap_file): file_(mmap_file){}
 public:
     static SSTable* newSSTableFile(const std::shared_ptr<FileOptions>& opt) {
-        MmapFile* mmap_file = MmapFile::NewMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
+        MmapFile* mmap_file = MmapFile::newMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
         if (mmap_file == nullptr) {
             return nullptr;
         }

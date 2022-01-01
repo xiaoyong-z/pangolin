@@ -16,32 +16,45 @@
 class MmapFile: public File{
    public:
     ~MmapFile();
-    class Reader: public FileReader{
+    class MmapReader: public FileReader{
     public:
-        Reader(){}
+        MmapReader(MmapFile* file): data_(file->mmap_data_), offset_(0), data_len_(file->map_size_) {}
+        ~MmapReader() {}
+        // void init(char* data, uint64_t map_size) {
+        //     data_ = data;
+        //     offset_ = 0;
+        //     data_len_ = map_size;
+        // }
 
-        void init(char* data) {
-            data_ = data;
-            offset_ = 0;
-        }
-
-        int Read(char* buf) {
-            int data_len = strlen(data_);
-            if (offset_ >= data_len) {
+        uint64_t read(char* buf) {
+            if (offset_ >= data_len_) {
                 return 0;
             }
-            int buf_size = strlen(buf);
-            int n = std::min(buf_size, data_len - offset_);
+            uint64_t buf_size = strlen(buf);
+            uint64_t n = std::min(buf_size, data_len_ - offset_);
             memmove(buf, data_ + offset_, n);
             offset_ += n;
             return n;
         }
+
+        uint64_t read(uint64_t n, char*& buf) {
+            if (offset_ >= data_len_) {
+                return 0;
+            }
+            uint64_t len = std::min(n, data_len_ - offset_);
+            buf = data_ + offset_;
+            offset_ += len;
+            return len;
+        }
+
+
     private:
         char* data_;
-        int offset_;
+        uint64_t offset_;
+        uint64_t data_len_;
     };
 
-    static MmapFile* NewMmapFile(std::string filename, int flag, uint64_t max_sz) {
+    static MmapFile* newMmapFile(std::string filename, int flag, uint64_t max_sz) {
         MmapFile* mmap_file = new MmapFile();
         RC result = mmap_file->open(filename, flag, max_sz);
         if (result != RC::SUCCESS) {
@@ -68,8 +81,8 @@ class MmapFile: public File{
             close();
             return RC::MMAPFILE_STAT;
         }
-        int file_size = f_stat.st_size;
-        if (file_size == 0) {
+        uint64_t file_size = f_stat.st_size;
+        if (file_size < max_sz) {
             if (ftruncate(fd_, max_sz) == -1) {
                 LOG("unable to truncate: %s", filename.c_str());
                 close();
@@ -152,14 +165,14 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
-    RC NewReader(const std::shared_ptr<FileReader>& reader) {
-        if (mmap_data_ == nullptr) {
-            LOG("mmap is not initialized: %s", filename_.c_str());
-            return RC::MMAPFILE_MMAP_UNINITIALIZE;
-        }
-        reader->init(mmap_data_);
-        return RC::SUCCESS;
-    }
+    // RC newReader(const std::shared_ptr<FileReader>& reader) {
+    //     if (mmap_data_ == nullptr) {
+    //         LOG("mmap is not initialized: %s", filename_.c_str());
+    //         return RC::MMAPFILE_MMAP_UNINITIALIZE;
+    //     }
+    //     reader->init(mmap_data_, map_size_);
+    //     return RC::SUCCESS;
+    // }
 
     RC bytes(uint64_t offset, int64_t size, char*& mmap_addr) {
         if (mmap_data_ == nullptr) {
@@ -199,7 +212,7 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
-    RC AllocateSlice(uint64_t size, uint64_t offset, char*& free_addr) {
+    RC allocateSlice(uint64_t size, uint64_t offset, char*& free_addr) {
         if (mmap_data_ == nullptr) {
             LOG("mmap is not initialized: %s", filename_.c_str());
             return RC::MMAPFILE_MMAP_UNINITIALIZE;

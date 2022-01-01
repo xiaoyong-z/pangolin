@@ -128,7 +128,7 @@ TEST(LSM_TEST, basic) {
     Slice svalue3(value3);
     Entry entry1(skey1, svalue1);
     Entry entry2(skey2, svalue2);
-    Entry entry3(skey1, svalue3);
+    Entry entry3(skey3, svalue3);
     Entry result;
 
     ASSERT_EQ(lsm->set(&entry1), RC::SUCCESS);
@@ -141,7 +141,7 @@ TEST(LSM_TEST, basic) {
     ASSERT_EQ(result.value_, value2);
 
     ASSERT_EQ(lsm->set(&entry3), RC::SUCCESS);
-    ASSERT_EQ(lsm->get(skey1, result), RC::SUCCESS);
+    ASSERT_EQ(lsm->get(skey3, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value3);
 
     Arena::Instance()->free();

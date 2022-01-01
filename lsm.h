@@ -51,7 +51,9 @@ public:
     }
 
 	static std::shared_ptr<MemTable> newMemTable(const std::shared_ptr<Options>& options, LevelManager* level_manager) {
-        uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
+        // uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
+
+		uint32_t fid = 1;
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
@@ -68,9 +70,8 @@ public:
 		assert(wal_file != nullptr);
 		SkipList* skiplist = new SkipList();
 		std::shared_ptr<MemTable> memTable = std::make_shared<MemTable>(wal_file, skiplist);
-		memTable->updateList();
-
-		return nullptr;
+		memTable->updateList(options);
+		return memTable;
 	}
 
 	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options){
@@ -119,7 +120,7 @@ public:
 		}
 
 		for (size_t i = 0; i < immutables_.size(); i++) {
-			rc = memtable_->get(key, entry);
+			rc = immutables_[i]->get(key, entry);
 			if (rc == RC::SUCCESS) {
 				return rc;
 			}

@@ -27,15 +27,20 @@ public:
         return skipList_->contains(key, entry);
     }
 
-    RC updateList() {
+    RC updateList(const std::shared_ptr<Options>& options) {
         if (wal_file_.get() == nullptr || skipList_.get() == nullptr) {
             return RC::MEMTABLE_UNINTIALIZE_FAIL;
         }
-
         
-        if (wal_file_.get() == nullptr) {
+        wal_file_->iterator(true, 0, skipList_.get(), replayFunction);
+        // if (wal_file_.get() == nullptr) {
             
-        }
+        // }
+    }
+
+    static void replayFunction(SkipList* skip_list, Entry* entry) {
+        RC rc = skip_list->insert(entry);
+        assert(rc == RC::SUCCESS);
     }
 
     std::unique_ptr<WALFile> wal_file_;

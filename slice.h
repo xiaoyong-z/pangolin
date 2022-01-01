@@ -41,6 +41,11 @@ class Slice {
   // Return a pointer to the beginning of the referenced data
   const char* data() const { return data_; }
 
+  void reset(const char* d, size_t n) {
+    data_ = d;
+    size_ = n;
+  }
+
   // Return the length (in bytes) of the referenced data
   size_t size() const { return size_; }
 
