@@ -16,9 +16,9 @@ public:
 		std::vector<std::shared_ptr<MemTable>> immutables;
 		LSM* lsm = new LSM(options);
 
-		lsm->level_mangaer_.reset(newLevelManager(options));
+		lsm->level_manager_.reset(newLevelManager(options));
 
-		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_mangaer_.get());
+		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_manager_.get());
 		if (result != RC::SUCCESS) {
 			
 		}
@@ -51,9 +51,8 @@ public:
     }
 
 	static std::shared_ptr<MemTable> newMemTable(const std::shared_ptr<Options>& options, LevelManager* level_manager) {
-        // uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
-
-		uint32_t fid = 1;
+        uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
+		// uint32_t fid = 1;
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
@@ -89,7 +88,7 @@ public:
 	RC set(Entry* entry) {
 		if (memtable_->wal_file_->size() + entry->estimateWalEntrySize() > options_->mem_table_size_) {
 			immutables_.push_back(memtable_);
-			memtable_ = newMemTable(options_, level_mangaer_.get());
+			memtable_ = newMemTable(options_, level_manager_.get());
 		}
 
 		RC result = memtable_->set(entry);
@@ -98,7 +97,7 @@ public:
 		}
 
 		for (size_t i = 0; i < immutables_.size(); i++) {
-			level_mangaer_->flush(immutables_[i]);
+			level_manager_->flush(immutables_[i]);
 		}
 		immutables_.clear();
     }
@@ -126,7 +125,15 @@ public:
 			}
 		}
 
-		return level_mangaer_->get(key, entry);
+		return level_manager_->get(key.ToString(), entry);
+	}
+
+	RC flush() {
+		RC result = level_manager_->flush(memtable_);
+        if (result != RC::SUCCESS) {
+            return result;
+        }
+		memtable_ = newMemTable(options_, level_manager_.get());
 	}
 
 
@@ -134,7 +141,7 @@ private:
 	std::shared_ptr<MemTable> memtable_;
 	std::vector<std::shared_ptr<MemTable>> immutables_;
 
-	std::unique_ptr<LevelManager> level_mangaer_;
+	std::unique_ptr<LevelManager> level_manager_;
 	std::shared_ptr<Options> options_;
 };
 #endif

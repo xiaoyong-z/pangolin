@@ -40,7 +40,7 @@ public:
         std::string codec_entry;
         const size_t codec_entry_size = walCodec(entry, codec_entry);
         RC result = file_->append(offset_, codec_entry);
-        offset_ += codec_entry.size();
+        offset_ += codec_entry_size;
         return result;
     }
 

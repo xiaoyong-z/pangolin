@@ -3,7 +3,7 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 #include <string>
 #include <vector>
-
+#include <filesystem>
 #include "gtest/gtest.h"
 #include "skipLists.h"
 #include "levels.h"
@@ -110,6 +110,8 @@ TEST(LSM_TEST, basic) {
     //     ASSERT_NE(skipList.contains(key2), nullptr);
     //     ASSERT_EQ(strcmp(skipList.contains(key2)->value_, value2), 0);
     // }
+    std::filesystem::remove_all("/home/parallels/metakv/data/");
+    std::filesystem::create_directory("/home/parallels/metakv/data/");
 
     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data", 283, 1024, 1024, 0.01);
     LSM* lsm = LSM::newLSM(opt);
@@ -143,6 +145,11 @@ TEST(LSM_TEST, basic) {
     ASSERT_EQ(lsm->set(&entry3), RC::SUCCESS);
     ASSERT_EQ(lsm->get(skey3, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value3);
+
+    ASSERT_EQ(lsm->flush(), RC::SUCCESS);
+    ASSERT_EQ(lsm->get(skey1, result), RC::SUCCESS);
+    ASSERT_EQ(result.value_, value1);
+
 
     Arena::Instance()->free();
 }

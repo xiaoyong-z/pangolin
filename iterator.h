@@ -6,7 +6,7 @@ public:
     virtual ~Iterator() {};
     virtual bool hasNext() = 0;
     virtual void next() = 0;
-    virtual const T& get() = 0;
+    virtual T get() = 0;
     virtual const T& find(const K& key) = 0;
 };
 

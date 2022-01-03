@@ -133,9 +133,7 @@ public:
         it_ = it_->next(0);
     } 
 
-    const Entry& get() {
-        // return it_->elem_;
-    }
+    Entry get();
 
     const Entry& find(const std::string& key) {
         // Todo

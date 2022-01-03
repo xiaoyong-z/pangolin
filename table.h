@@ -27,33 +27,33 @@ public:
         return builder->flush(sstable_.get());
     }
 
-    RC get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
-        // if (key < sstable_->min_key_ || key > sstable_->max_key_) {
-        //     return RC::TABLE_EXCEED_MINMAX;
-        // }
+    RC get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+        if (key < sstable_->min_key_ || key > sstable_->max_key_) {
+            return RC::TABLE_EXCEED_MINMAX;
+        }
 
-        // if (BloomFilter::contains(key.data(), *sstable_->bloom_filter_) == false) {
-        //     return RC::TABLE_BLOOM_FILTER_NOT_CONTAIN;
-        // }
+        if (BloomFilter::contains(key.data(), *sstable_->bloom_filter_) == false) {
+            return RC::TABLE_BLOOM_FILTER_NOT_CONTAIN;
+        }
 
-        // std::unique_ptr<BlockOffsetsIterator> iterator(sstable_->newIterator());
-        // uint32_t block_index = iterator->find(key);
-        // const pb::BlockOffset& blockOffset = iterator->getBlockOffset(block_index);
-        // uint64_t bId = getCacheBlockId(block_index);
+        std::unique_ptr<BlockOffsetsIterator> iterator(sstable_->newIterator());
+        uint32_t block_index = iterator->find(key);
+        const pb::BlockOffset& blockOffset = iterator->getBlockOffset(block_index);
+        uint64_t bId = getCacheBlockId(block_index);
 
-        // Block* block_ptr;
-        // Cache& cache = Cache::Instance();
-        // if (cache.getBlockCache(bId, block_ptr) == false) {
-        //     Block block(blockOffset, sstable_.get());
-        //     cache.setBlockCache(bId, std::move(block));
-        //     cache.getBlockCache(bId, block_ptr);
-        // }
+        Block* block_ptr;
+        Cache& cache = Cache::Instance();
+        if (cache.getBlockCache(bId, block_ptr) == false) {
+            Block block(blockOffset, sstable_.get());
+            cache.setBlockCache(bId, std::move(block));
+            cache.getBlockCache(bId, block_ptr);
+        }
         
-        // std::unique_ptr<BlockIterator> block_iterator(block_ptr->newIterator());
-        // entry.value_ = block_iterator->find(key);
-        // if (entry.value_ == "") {
-        //     return RC::TABLE_KEY_NOT_FOUND_IN_BLOCK;   
-        // }
+        std::unique_ptr<BlockIterator> block_iterator(block_ptr->newIterator());
+        entry.value_ = block_iterator->find(key);
+        if (entry.value_ == "") {
+            return RC::TABLE_KEY_NOT_FOUND_IN_BLOCK;   
+        }
         
         return RC::SUCCESS;
     }
