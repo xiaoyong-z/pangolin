@@ -28,10 +28,8 @@ public:
 	static RC recoveryWAL(const std::shared_ptr<Options>& options, std::shared_ptr<MemTable>& memtable, 
 		std::vector<std::shared_ptr<MemTable>>& immutables, LevelManager* level_manager) {
 
-        bool has_wal_file = false;
         std::map<int, std::string> wal_file_map;
         for (const auto & entry : std::filesystem::directory_iterator(options->work_dir_)) {
-            has_wal_file = true;
 			const std::string& path = entry.path().string();
 			int suffix_position = path.find_last_of('.');
 			int last_slash_postion = path.find_last_of("/");
@@ -134,6 +132,7 @@ public:
             return result;
         }
 		memtable_ = newMemTable(options_, level_manager_.get());
+		return RC::SUCCESS;
 	}
 
 

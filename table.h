@@ -7,7 +7,7 @@
 class LevelManager;
 class Table {
 private:
-    Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id) {}
+    Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id), crc_(0) {}
 public:
     static Table* NewTable(const std::string& dir_name, uint32_t file_id, uint64_t sstable_max_sz) {
         std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
@@ -24,7 +24,7 @@ public:
     }
 
     RC flush(const std::shared_ptr<Builder>& builder) {
-        return builder->flush(sstable_.get());
+        return builder->flush(sstable_.get(), crc_);
     }
 
     RC get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
@@ -63,13 +63,22 @@ public:
         return RC::SUCCESS;
     }
 
-    uint64_t getCacheBlockId(uint32_t block_index) {
-        
+    uint64_t getCacheBlockId(uint32_t block_index) {    
         return block_index || static_cast<uint64_t>(fd_) << 32;
+    }
+
+    uint32_t getFD() {
+        return fd_;
+    }
+
+    uint32_t getCRC() {
+        assert(crc_ != 0);
+        return crc_;
     }
 
 private:
     std::unique_ptr<SSTable> sstable_;
     uint32_t fd_;
+    uint32_t crc_;
 };
 #endif

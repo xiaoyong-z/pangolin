@@ -38,8 +38,7 @@ public:
     }
 
     RC get(const std::string& key, Entry& entry) {
-        RC result = levels_[0].level0Get(key, entry, opt_);
-        return RC::SUCCESS;
+        return levels_[0].level0Get(key, entry, opt_);
     }
 
     RC flush(const std::shared_ptr<MemTable>& memtable) {
@@ -57,6 +56,7 @@ public:
         table_raw->flush(builder);
         table_raw->open();
         levels_[0].tables_.push_back(table);
+        manifest_file_->addTableMeta(0, table);
 
         return RC::SUCCESS;
     }
@@ -65,7 +65,7 @@ private:
     std::atomic<uint32_t> cur_file_id_;
     std::shared_ptr<Options> opt_;
     std::vector<LevelHandler> levels_;
-    std::unique_ptr<Manifest> manifest_;
+    std::unique_ptr<ManifestFile> manifest_file_;
     Cache cache;
 };
 

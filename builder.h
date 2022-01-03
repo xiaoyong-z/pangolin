@@ -27,7 +27,7 @@ public:
         return RC::SUCCESS;
     }
 
-    RC flush(SSTable* sstable) {
+    RC flush(SSTable* sstable, uint32_t& table_crc32) {
         if (cur_block_ != nullptr) {
             key_count_ += cur_block_->getKeyCount();
             cur_block_->finish();
@@ -41,6 +41,7 @@ public:
         indexBuilder(filter, indexBlockContent, block_len);
         uint64_t index_len = indexBlockContent.size();
         uint32_t index_checksum = crc32c::Value(indexBlockContent.data(), index_len);
+        table_crc32 = index_checksum;
         uint64_t total_len = block_len + index_len + sizeof(index_checksum) + 4 + 4;
         char* mmap_addr;
         RC result = sstable->bytes(0, total_len, mmap_addr);

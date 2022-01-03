@@ -3,9 +3,9 @@
 #include <vector>
 #include "coding.h"
 #include "crc32c.h"
-#include "kv.pb.h"
 #include "sstable.h"
 #include "util.h"
+#include "kv.pb.h"
 class BlockIterator {
 
 public:

@@ -14,3 +14,18 @@ message BlockOffset {
     uint64 offset = 2;
     uint32 len = 3; 
 } 
+
+message ManifestChangeSet {
+    repeated ManifestChange changes = 1;
+}
+
+message ManifestChange {
+    uint32 id = 1;
+    enum Operation {
+        CREATE = 0;
+        DELETE = 1;
+    }
+    Operation op = 2;
+    uint32 level = 3;
+    uint32 check_sum = 4;
+} 
