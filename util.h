@@ -28,4 +28,14 @@ public:
         return path + "/" + std::to_string(fid) + "." + postfix;
     }
 };
+
+namespace ManifestConfig {
+    static const int DeleteRewriteThreshold = 10000;
+    static const int DeleteRewriteRatio = 10;
+    static const std::string magicNum = "4521";
+    static const std::string versionNum = "0001";
+    static const std::string fileName = "MANIFEST";
+    static const std::string rfileName = "REMANIFEST";
+};
+
 #endif

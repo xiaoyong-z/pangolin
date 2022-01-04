@@ -71,7 +71,8 @@ public:
 		return memTable;
 	}
 
-	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options){
+	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options) {
+		// ManifestFile* manifest_file_ = new ;
         LevelManager* level_manger = new LevelManager(options);
         // lm.opt_ = opt_
         // // 读取manifest文件构建管理器

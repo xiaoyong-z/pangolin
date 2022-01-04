@@ -11,7 +11,7 @@ class Manifest {
 public:
     Manifest():creations_(0){};
 
-    RC addTableMeta(const pb::ManifestChangeSet& set) {
+    RC applyChangeSet(const pb::ManifestChangeSet& set) {
         int size = set.changes_size();
         RC result;
         for (int i = 0; i < size; i++) {
@@ -28,8 +28,8 @@ public:
         pb::ManifestChange_Operation operation = change.op();
         if (operation == pb::ManifestChange_Operation_CREATE) {
             uint32_t id = change.id();
-            if (tables_.find(id) != tables.end()) {
-                // return RC::
+            if (tables_.find(id) != tables_.end()) {
+                return RC::MANIFEST_TABLE_ALREADY_EXIST;
             }
             uint32_t level = change.level();
             uint32_t crc = change.check_sum();
@@ -42,15 +42,38 @@ public:
             creations_++;
         } else if (operation == pb::ManifestChange_Operation_DELETE) {
             uint32_t id = change.id();
+            if (tables_.find(id) != tables_.end()) {
+                return RC::MANIFEST_TABLE_NOT_EXIST;
+            }
             uint32_t level = change.level();
             levels_[level].erase(id);
             tables_.erase(id);
             deletions_++;
         } else {
-            assert(false);
+            return RC::MANIFEST_ILLEAGAL_OPERATION;
         }
         return RC::SUCCESS;
     }
+
+    inline int getCreations() {
+        return creations_;
+    }
+
+    inline int getDeletions() {
+        return deletions_;
+    }
+
+    inline void setCreations(int creations) {
+        creations_ = creations;
+    }
+
+    inline void setDeletions(int deletions) {
+        deletions_ = deletions;
+    }
+
+    inline std::unordered_map<uint32_t, TableManifest>& getTables() {
+        return tables_;
+    } 
 
 private:
     std::vector<std::unordered_set<uint32_t>> levels_;
@@ -60,16 +83,34 @@ private:
 };
 
 class ManifestFile {
-    ManifestFile(MmapFile* mmap_file, std::shared_ptr<Options> opt):
-        file_(mmap_file), opt_(opt), manifest_(new Manifest()){}
+    ManifestFile(std::shared_ptr<Options> opt): opt_(opt), manifest_(new Manifest()){}
 public:
-    static ManifestFile* newManifestFile(const std::shared_ptr<FileOptions>& file_opt, std::shared_ptr<Options> opt) {
-        MmapFile* mmap_file = MmapFile::newMmapFile(file_opt->file_name_, file_opt->flag_, file_opt->max_sz_);
-        if (mmap_file == nullptr) {
-            return nullptr;
+    void setFile(int file) {
+        file_ = file;
+    }
+
+    static ManifestFile* openManifestFile(std::shared_ptr<Options> opt) {
+        ManifestFile* manifestFile = new ManifestFile(opt);
+        std::string file_name = opt->work_dir_ + ManifestConfig::fileName;
+        int file = open(file_name.c_str(), O_RDONLY, 0666);
+        if (file < 0) {
+            RC result = manifestFile->rewriteManifest();
+            if (result != RC::SUCCESS) {
+                delete manifestFile;
+                return nullptr;
+            }
+            file = open(file_name.c_str(), O_RDONLY, 0666);
+            assert(file > 0);
+            manifestFile->setFile(file);
+        } else {
+            
         }
-        ManifestFile* wal_file = new ManifestFile(mmap_file, opt);
-        return wal_file;
+        // MmapFile* mmap_file = MmapFile::newMmapFile(file_opt->file_name_, file_opt->flag_, file_opt->max_sz_);
+        // if (mmap_file == nullptr) {
+        //     return nullptr;
+        // }
+        // ManifestFile* wal_file = new ManifestFile(mmap_file, opt);
+        // return wal_file;
     }
 
     RC addTableMeta(int level, const std::shared_ptr<Table>& table) {
@@ -84,16 +125,94 @@ public:
 
     RC addTableMeta(const pb::ManifestChangeSet& set) {
         std::lock_guard guard(mutex_);
-        manifest_->addTableMeta(set);
-        
-        // return manifest_->addTableMeta(level, table);
+        RC result = manifest_->applyChangeSet(set);
+        if (result != RC::LEVELS_FILE_NOT_OPEN) {
+            return result;
+        }
+        int manifest_creations = manifest_->getCreations();
+        int manifest_deletions = manifest_->getDeletions();
+
+        if (manifest_deletions > ManifestConfig::DeleteRewriteThreshold ||
+            ManifestConfig::DeleteRewriteRatio* manifest_deletions > (manifest_creations - manifest_deletions)) {
+            result = rewriteManifest();
+            if (result != RC::SUCCESS) {
+                return result;
+            }
+        } else {
+            std::string write_buf;
+            std::string serialize_set = set.SerializeAsString();
+            uint32_t crc = crc32c::Value(serialize_set.data(), serialize_set.size());
+            uint32_t change_len = serialize_set.size() + 4;
+            encodeFix32(&write_buf, change_len);
+            encodeFix32(&write_buf, crc);
+            write_buf.append(serialize_set);
+            size_t size = write(file_, write_buf.data(), write_buf.size());
+            if (size != write_buf.size()) {
+                return RC::MANIFEST_WRITE_FILE_FAIL;
+            }
+            int flag = fsync(file_);
+            if (flag != 0) {
+                return RC::MANIFEST_FSYNC_FILE_FAIL;
+            }
+        }
         return RC::SUCCESS;
     }
 
-    std::unique_ptr<MmapFile> file_;
+    RC rewriteManifest() {
+        std::string rewrite_file_name = opt_->work_dir_ + ManifestConfig::rfileName;
+        int fd_ = ::open(rewrite_file_name.c_str(), O_CREAT | O_RDWR, 0666);
+        if (fd_ < 0) {
+            LOG("unable to open: %s", rewrite_file_name.c_str());
+            return RC::MANIFEST_REWRITE_OPEN_FILE_FAIL;
+        }
+        std::string write_buf;
+        int manifest_creations = manifest_->getCreations();
+        pb::ManifestChange temp;
+        std::cout << temp.ByteSize() << std::endl;
+        write_buf.resize(8 + manifest_creations * temp.ByteSize() + 8);
+        write_buf.append(ManifestConfig::magicNum);
+        write_buf.append(ManifestConfig::versionNum);
+        pb::ManifestChangeSet set;
+
+        for (const auto& iterator: manifest_->getTables()) {
+            pb::ManifestChange* change = set.add_changes();
+            change->set_id(iterator.first);
+            change->set_check_sum(iterator.second.crc_);
+            change->set_level(iterator.second.level_);
+            change->set_op(pb::ManifestChange_Operation_CREATE);
+        }
+        std::string serialize_set = set.SerializeAsString();
+        uint32_t crc = crc32c::Value(serialize_set.data(), serialize_set.size());
+        uint32_t change_len = serialize_set.size() + 4;
+        encodeFix32(&write_buf, change_len);
+        encodeFix32(&write_buf, crc);
+        write_buf.append(serialize_set);
+
+        size_t size = write(fd_, write_buf.data(), write_buf.size());
+        if (size != write_buf.size()) {
+            return RC::MANIFEST_WRITE_FILE_FAIL;
+        }
+        int flag = fsync(fd_);
+        if (flag != 0) {
+            return RC::MANIFEST_FSYNC_FILE_FAIL;
+        }
+        if (close(fd_) != 0) {
+            return RC::MANIFEST_CLOSE_FILE_FAIL;
+        }
+
+        std::string file_name = opt_->work_dir_ + ManifestConfig::fileName; 
+        if (rename(rewrite_file_name.data(), file_name.data()) != 0) {
+            return RC::MANIFEST_RENAME_FILE_FAIL;
+        }
+        manifest_->setCreations(set.changes_size());
+        manifest_->setDeletions(0);
+        
+        return RC::SUCCESS;
+    }
+
+    int file_;
     std::shared_ptr<Options> opt_;
     std::unique_ptr<Manifest> manifest_;
-    int deletionsRewriteThreshold_;
     std::mutex mutex_;
 };
 
