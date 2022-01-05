@@ -3,12 +3,14 @@
 
 #include "kv.pb.h"
 class Manifest {
+public:
     struct TableManifest {
+        TableManifest() {}
         TableManifest(uint8_t level, uint32_t crc): level_(level), crc_(crc) {}
         uint8_t level_;
         uint32_t crc_;
     };
-public:
+
     Manifest():creations_(0){};
 
     RC applyChangeSet(const pb::ManifestChangeSet& set) {
@@ -128,14 +130,17 @@ public:
         }
 
         uint32_t change_len = decodeFix32(buf + 8);
-        uint32_t crc = decodeFix32(buf + 12);
+        uint32_t true_crc = decodeFix32(buf + 12);
 
         char serialize_buf[change_len];
         count = read(file_, serialize_buf, change_len);
         if (count != change_len) {
             return RC::MANIFEST_REPLAY_FAIL;
         }
-
+        uint32_t cur_crc = crc32c::Value(serialize_buf, change_len);
+        if (cur_crc != true_crc) {
+            return RC::MANIFEST_CRC_CHECK_FAIL; 
+        }
         pb::ManifestChangeSet set;
         set.ParseFromArray(serialize_buf, change_len);
 
@@ -195,10 +200,10 @@ public:
             return RC::MANIFEST_REWRITE_OPEN_FILE_FAIL;
         }
         std::string write_buf;
-        int manifest_creations = manifest_->getCreations();
-        pb::ManifestChange temp;
-        // std::cout << temp.ByteSize() << std::endl;
-        write_buf.resize(8 + manifest_creations * temp.ByteSize() + 8);
+        // int manifest_creations = manifest_->getCreations();
+        // pb::ManifestChange temp;
+        // std::cout << temp.ByteSizeLong() << std::endl;
+        write_buf.resize(16);
         write_buf.append(ManifestConfig::magicNum);
         write_buf.append(ManifestConfig::versionNum);
         pb::ManifestChangeSet set;
@@ -239,6 +244,33 @@ public:
         return RC::SUCCESS;
     }
 
+    RC revertToManifest(std::set<uint32_t>& sstable_file_id) {
+        std::unordered_map<uint32_t, Manifest::TableManifest>& tables = manifest_->getTables();
+        for (const auto& iterator: tables) {
+            if (sstable_file_id.contains(iterator.first) == false) {
+                return RC::MANIFEST_TABLE_CONTAIN_NONEXIST_SSTABLE;
+            }
+        }
+
+        for (auto it = sstable_file_id.begin(); it != sstable_file_id.end(); ) {
+            if (tables.find(*it) == tables.end()) {
+                std::string file_name = Util::filePathJoin(opt_->work_dir_, *it, SSTableConfig::filePostfix);
+                if (remove(file_name.data()) != 0) {
+                    return RC::MANIFEST_REMOVE_FILE_FAIL;
+                }
+                sstable_file_id.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        return RC::SUCCESS;
+    }
+
+    std::unordered_map<uint32_t, Manifest::TableManifest>& getTables(){
+        return manifest_->getTables();
+    }
+    
+private:
     int file_;
     std::shared_ptr<Options> opt_;
     std::unique_ptr<Manifest> manifest_;

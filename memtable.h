@@ -33,9 +33,7 @@ public:
         }
         
         wal_file_->iterator(true, 0, skipList_.get(), replayFunction);
-        // if (wal_file_.get() == nullptr) {
-            
-        // }
+        return RC::SUCCESS;
     }
 
     static void replayFunction(SkipList* skip_list, Entry* entry) {

@@ -24,7 +24,7 @@ public:
         return (size / ALIGN_NUM) * ALIGN_NUM + ((size % ALIGN_NUM == 0) ? 0 : ALIGN_NUM);
     }
 
-    static inline std::string filePathJoin(const std::string& path, uint64_t fid, const std::string& postfix) {
+    static inline std::string filePathJoin(const std::string& path, uint32_t fid, const std::string& postfix) {
         return path + "/" + std::to_string(fid) + "." + postfix;
     }
 };
@@ -40,7 +40,11 @@ namespace ManifestConfig {
 };
 
 namespace SSTableConfig {
-    static const std::string filePrefix = "SSTABLE";
+    static const std::string filePostfix = "sstable";
+}
+
+namespace WALConfig {
+    static const std::string filePostfix = "wal";
 }
 
 #endif

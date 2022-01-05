@@ -33,7 +33,7 @@ public:
 			const std::string& path = entry.path().string();
 			int suffix_position = path.find_last_of('.');
 			int last_slash_postion = path.find_last_of("/");
-			if (path.substr(suffix_position + 1) == "wal") {
+			if (path.substr(suffix_position + 1) == WALConfig::filePostfix) {
 				wal_file_map.emplace(std::stoi(path.substr(last_slash_postion + 1, suffix_position - last_slash_postion - 1)), path);
 				// wal_file_names.push_back(path);
 			}
@@ -53,7 +53,7 @@ public:
 		// uint32_t fid = 1;
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
-		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
+		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);
 		WALFile* wal_file = WALFile::newWALFile(file_opt);
 		assert(wal_file != nullptr);
 		SkipList* skiplist = new SkipList();
@@ -62,7 +62,7 @@ public:
 
 	static std::shared_ptr<MemTable> openMemTable(const std::shared_ptr<Options>& options, const uint32_t fid) {
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_RDONLY, options->ssTable_max_sz_);
-		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, "wal");
+		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);
 		WALFile* wal_file = WALFile::newWALFile(file_opt);
 		assert(wal_file != nullptr);
 		SkipList* skiplist = new SkipList();
@@ -73,15 +73,10 @@ public:
 
 	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options) {
 		ManifestFile* manifest_file = ManifestFile::openManifestFile(options);
-		// ManifestFile* manifest_file_ = new ;
+		if (manifest_file == nullptr) {
+			return nullptr;
+		}
         LevelManager* level_manger = new LevelManager(options, manifest_file);
-        // lm.opt_ = opt_
-        // // 读取manifest文件构建管理器
-        // if err := lm.loadManifest(); err != nil {
-        //     panic(err)
-        // }
-        // lm.build()
-        // return lm
         return level_manger;
     }
 
@@ -100,6 +95,7 @@ public:
 			level_manager_->flush(immutables_[i]);
 		}
 		immutables_.clear();
+		return RC::SUCCESS;
     }
 
 

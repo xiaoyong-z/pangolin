@@ -11,7 +11,8 @@ private:
 public:
     static Table* NewTable(const std::string& dir_name, uint32_t file_id, uint64_t sstable_max_sz) {
         std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
-        file_opt->file_name_ = dir_name + SSTableConfig::filePrefix + std::to_string(file_id);
+        file_opt->file_name_ = Util::filePathJoin(dir_name, file_id, SSTableConfig::filePostfix);
+
         file_opt->dir_ = dir_name;
         file_opt->flag_ = O_CREAT | O_RDWR;
         file_opt->max_sz_ = sstable_max_sz;
