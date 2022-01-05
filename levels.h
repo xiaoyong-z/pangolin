@@ -58,10 +58,10 @@ public:
             Table* table_raw = Table::NewTable(opt_->work_dir_, file_id, opt_->ssTable_max_sz_);
             assert(table_raw != nullptr);
             std::shared_ptr<Table> table(table_raw);
+            table->open();
             if (crc != table->getCRC()) {
                 assert(false);
             }
-            table->open();
             for (size_t i = levels_.size(); i <= level; i++) {
                 levels_.emplace_back();
             }

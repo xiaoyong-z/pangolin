@@ -110,8 +110,9 @@ TEST(LSM_TEST, basic) {
     //     ASSERT_NE(skipList.contains(key2), nullptr);
     //     ASSERT_EQ(strcmp(skipList.contains(key2)->value_, value2), 0);
     // }
-    std::filesystem::remove_all("/home/parallels/metakv/data/");
-    std::filesystem::create_directory("/home/parallels/metakv/data/");
+    
+    // std::filesystem::remove_all("/home/parallels/metakv/data/");
+    // std::filesystem::create_directory("/home/parallels/metakv/data/");
 
     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 283, 1024, 1024, 0.01);
     LSM* lsm = LSM::newLSM(opt);

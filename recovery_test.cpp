@@ -12,7 +12,7 @@
 #include "lsm.h"
 
 TEST(RecoveryTest, BasicTest) {
-    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data", 283, 1024, 1024, 0.01);
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 283, 1024, 1024, 0.01);
     LSM* lsm = LSM::newLSM(opt);
 
     std::string key1 = "key1";

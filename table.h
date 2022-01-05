@@ -60,7 +60,7 @@ public:
     }
 
     RC open() {
-        sstable_->init();
+        sstable_->init(crc_);
         return RC::SUCCESS;
     }
 

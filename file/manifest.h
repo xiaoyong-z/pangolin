@@ -1,6 +1,7 @@
 #ifndef MANIFEST_H
 #define MANIFEST_H
 
+#include <sys/stat.h>
 #include "kv.pb.h"
 class Manifest {
 public:
@@ -91,23 +92,37 @@ public:
         file_ = file;
     }
 
+    ~ManifestFile() {
+        assert (close(file_) == 0);
+    }
+
     static ManifestFile* openManifestFile(std::shared_ptr<Options> opt) {
         ManifestFile* manifestFile = new ManifestFile(opt);
         std::string file_name = opt->work_dir_ + ManifestConfig::fileName;
-        int file = open(file_name.c_str(), O_RDONLY, 0666);
-        if (file < 0) {
+        struct stat statbuf;
+        bool flag = stat(file_name.c_str(), &statbuf);
+        int file;
+        if (flag != 0) {
             RC result = manifestFile->rewriteManifest();
             if (result != RC::SUCCESS) {
                 delete manifestFile;
                 return nullptr;
             }
-            file = open(file_name.c_str(), O_RDONLY, 0666);
+            file = open(file_name.c_str(), O_RDWR, 0666);
+            if (lseek(file, 0, SEEK_END) == -1) {
+                return nullptr;
+            }
             assert(file > 0);
             manifestFile->setFile(file);
         } else {
+            file = open(file_name.c_str(), O_RDWR, 0666);
+            assert(file > 0);
             manifestFile->setFile(file); 
             RC result = manifestFile->replayManifest();
             if (result != RC::SUCCESS) {
+                return nullptr;
+            }
+            if (lseek(file, 0, SEEK_END) == -1) {
                 return nullptr;
             }
         }
@@ -115,9 +130,9 @@ public:
     }
 
     RC replayManifest() {
-        char buf[ManifestConfig::changeHeadSize];
-        size_t count = read(file_, buf, ManifestConfig::changeHeadSize);
-        if (count != ManifestConfig::changeHeadSize) {
+        char buf[ManifestConfig::manifestHeadSize];
+        size_t count = read(file_, buf, ManifestConfig::manifestHeadSize);
+        if (count != ManifestConfig::manifestHeadSize) {
             return RC::MANIFEST_REPLAY_FAIL;
         }
         
@@ -129,22 +144,31 @@ public:
             return RC::MANIFEST_REPLAY_FAIL;
         }
 
-        uint32_t change_len = decodeFix32(buf + 8);
-        uint32_t true_crc = decodeFix32(buf + 12);
+        char buf2[ManifestConfig::changeHeadSize];
+        size_t size; 
 
-        char serialize_buf[change_len];
-        count = read(file_, serialize_buf, change_len);
-        if (count != change_len) {
-            return RC::MANIFEST_REPLAY_FAIL;
-        }
-        uint32_t cur_crc = crc32c::Value(serialize_buf, change_len);
-        if (cur_crc != true_crc) {
-            return RC::MANIFEST_CRC_CHECK_FAIL; 
-        }
-        pb::ManifestChangeSet set;
-        set.ParseFromArray(serialize_buf, change_len);
+        while ((size = read(file_, buf2, ManifestConfig::changeHeadSize)) == ManifestConfig::changeHeadSize) {
+            uint32_t change_len = decodeFix32(buf2);
+            uint32_t true_crc = decodeFix32(buf2 + 4);
 
-        return manifest_->applyChangeSet(set);
+            char serialize_buf[change_len];
+            count = read(file_, serialize_buf, change_len);
+            if (count != change_len) {
+                return RC::MANIFEST_REPLAY_FAIL;
+            }
+            uint32_t cur_crc = crc32c::Value(serialize_buf, change_len);
+            if (cur_crc != true_crc) {
+                return RC::MANIFEST_CRC_CHECK_FAIL; 
+            }
+            pb::ManifestChangeSet set;
+            set.ParseFromArray(serialize_buf, change_len);
+            RC result = manifest_->applyChangeSet(set);
+            if (result != RC::SUCCESS) {
+                return result;
+            }
+        }
+
+        return RC::SUCCESS;
     }
 
     RC addTableMeta(int level, const std::shared_ptr<Table>& table) {
@@ -160,7 +184,7 @@ public:
     RC addTableMeta(const pb::ManifestChangeSet& set) {
         std::lock_guard guard(mutex_);
         RC result = manifest_->applyChangeSet(set);
-        if (result != RC::LEVELS_FILE_NOT_OPEN) {
+        if (result != RC::SUCCESS) {
             return result;
         }
         int manifest_creations = manifest_->getCreations();
@@ -176,7 +200,7 @@ public:
             std::string write_buf;
             std::string serialize_set = set.SerializeAsString();
             uint32_t crc = crc32c::Value(serialize_set.data(), serialize_set.size());
-            uint32_t change_len = serialize_set.size() + 4;
+            uint32_t change_len = serialize_set.size();
             encodeFix32(&write_buf, change_len);
             encodeFix32(&write_buf, crc);
             write_buf.append(serialize_set);
@@ -194,8 +218,8 @@ public:
 
     RC rewriteManifest() {
         std::string rewrite_file_name = opt_->work_dir_ + ManifestConfig::rfileName;
-        int fd_ = ::open(rewrite_file_name.c_str(), O_CREAT | O_RDWR, 0666);
-        if (fd_ < 0) {
+        int file = ::open(rewrite_file_name.c_str(), O_CREAT | O_RDWR, 0666);
+        if (file < 0) {
             LOG("unable to open: %s", rewrite_file_name.c_str());
             return RC::MANIFEST_REWRITE_OPEN_FILE_FAIL;
         }
@@ -203,7 +227,7 @@ public:
         // int manifest_creations = manifest_->getCreations();
         // pb::ManifestChange temp;
         // std::cout << temp.ByteSizeLong() << std::endl;
-        write_buf.resize(16);
+        // write_buf.resize(16);
         write_buf.append(ManifestConfig::magicNum);
         write_buf.append(ManifestConfig::versionNum);
         pb::ManifestChangeSet set;
@@ -218,19 +242,20 @@ public:
         std::string serialize_set = set.SerializeAsString();
         uint32_t crc = crc32c::Value(serialize_set.data(), serialize_set.size());
         uint32_t change_len = serialize_set.size();
-        encodeFix32(&write_buf, change_len);
-        encodeFix32(&write_buf, crc);
-        write_buf.append(serialize_set);
-
-        size_t size = write(fd_, write_buf.data(), write_buf.size());
+        if (change_len > 0) {
+            encodeFix32(&write_buf, change_len);
+            encodeFix32(&write_buf, crc);
+            write_buf.append(serialize_set);
+        }
+        size_t size = write(file, write_buf.data(), write_buf.size());
         if (size != write_buf.size()) {
             return RC::MANIFEST_WRITE_FILE_FAIL;
         }
-        int flag = fsync(fd_);
+        int flag = fsync(file);
         if (flag != 0) {
             return RC::MANIFEST_FSYNC_FILE_FAIL;
         }
-        if (close(fd_) != 0) {
+        if (close(file) != 0) {
             return RC::MANIFEST_CLOSE_FILE_FAIL;
         }
 

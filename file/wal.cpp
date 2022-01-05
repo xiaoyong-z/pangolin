@@ -6,12 +6,16 @@ RC WALFile::iterator(bool read_only, uint64_t start_offset, SkipList* skip_list,
     }
     char* data;
     RC result = file_->get_mmap_ptr(data);
+    if (result != RC::SUCCESS) {
+        return result;
+    }
     std::shared_ptr<MmapFile::MmapReader> reader = std::make_shared<MmapFile::MmapReader>(file_.get());
     
     Entry entry;
     while (decodeEntry(reader, &entry) == RC::SUCCESS) {
         func(skip_list, &entry);
     }
+    return result;
     
     
     // char* buf;

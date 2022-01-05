@@ -70,7 +70,7 @@ public:
         return file_->bytes(offset, size, mmap_addr);
     }
     
-    RC init() {
+    RC init(uint32_t& crc) {
         char* mmap_ptr;
         RC result = file_->get_mmap_ptr(mmap_ptr);
         if (result != RC::SUCCESS) {
@@ -82,6 +82,7 @@ public:
         uint32_t check_sum_len = decodeFix32(mmap_ptr - sizeof(uint32_t));
         mmap_ptr -= sizeof(uint32_t);
         uint32_t check_sum = decodeFix32(mmap_ptr - check_sum_len);
+        crc = check_sum;
         mmap_ptr -= check_sum_len;
         uint64_t index_len = decodeFix64(mmap_ptr - sizeof(uint64_t));
         mmap_ptr -= sizeof(uint64_t);
