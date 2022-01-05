@@ -113,7 +113,7 @@ TEST(LSM_TEST, basic) {
     std::filesystem::remove_all("/home/parallels/metakv/data/");
     std::filesystem::create_directory("/home/parallels/metakv/data/");
 
-    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data", 283, 1024, 1024, 0.01);
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 283, 1024, 1024, 0.01);
     LSM* lsm = LSM::newLSM(opt);
 
     std::string key1 = "key1";
@@ -146,9 +146,11 @@ TEST(LSM_TEST, basic) {
     ASSERT_EQ(lsm->get(skey3, result), RC::SUCCESS);
     ASSERT_EQ(result.value_, value3);
 
+
+    Entry result2;
     ASSERT_EQ(lsm->flush(), RC::SUCCESS);
-    ASSERT_EQ(lsm->get(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value1);
+    ASSERT_EQ(lsm->get(skey1, result2), RC::SUCCESS);
+    ASSERT_EQ(result2.value_, value1);
 
 
     Arena::Instance()->free();

@@ -9,10 +9,9 @@
 class LevelManager;
 class LevelHandler {
 public:
-    RC level0Get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+    RC level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
         for (size_t i = 0; i < tables_.size(); i++) {
             if (tables_[i]->get(key, entry, opt) == RC::SUCCESS) {
-                entry.key_ = key;
                 return RC::SUCCESS;
             }
         }
@@ -33,11 +32,12 @@ class LevelManager: public std::enable_shared_from_this<LevelManager> {
     friend class Table;
     friend class LSM;
 public:
-    LevelManager(const std::shared_ptr<Options>& options): cur_file_id_(0), opt_(options) {
+    LevelManager(const std::shared_ptr<Options>& options, ManifestFile* manifest_file): 
+        cur_file_id_(0), opt_(options), manifest_file_(manifest_file) {
         levels_.emplace_back();
     }
 
-    RC get(const std::string& key, Entry& entry) {
+    RC get(const Slice& key, Entry& entry) {
         return levels_[0].level0Get(key, entry, opt_);
     }
 

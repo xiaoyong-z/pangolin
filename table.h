@@ -11,7 +11,7 @@ private:
 public:
     static Table* NewTable(const std::string& dir_name, uint32_t file_id, uint64_t sstable_max_sz) {
         std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
-        file_opt->file_name_ = dir_name + std::to_string(file_id);
+        file_opt->file_name_ = dir_name + SSTableConfig::filePrefix + std::to_string(file_id);
         file_opt->dir_ = dir_name;
         file_opt->flag_ = O_CREAT | O_RDWR;
         file_opt->max_sz_ = sstable_max_sz;
@@ -27,8 +27,9 @@ public:
         return builder->flush(sstable_.get(), crc_);
     }
 
-    RC get(const std::string& key, Entry& entry, const std::shared_ptr<Options>& opt) {
-        if (key < sstable_->min_key_ || key > sstable_->max_key_) {
+    RC get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+        std::string key2 = key.ToString();
+        if (key.compare(sstable_->min_key_) < 0 || key.compare(sstable_->max_key_) > 0) {
             return RC::TABLE_EXCEED_MINMAX;
         }
 
@@ -37,7 +38,7 @@ public:
         }
 
         std::unique_ptr<BlockOffsetsIterator> iterator(sstable_->newIterator());
-        uint32_t block_index = iterator->find(key);
+        uint32_t block_index = iterator->find(key2);
         const pb::BlockOffset& blockOffset = iterator->getBlockOffset(block_index);
         uint64_t bId = getCacheBlockId(block_index);
 
@@ -50,11 +51,10 @@ public:
         }
         
         std::unique_ptr<BlockIterator> block_iterator(block_ptr->newIterator());
-        entry.value_ = block_iterator->find(key);
-        if (entry.value_ == "") {
+        if (block_iterator->find(key2, entry) == false) {
             return RC::TABLE_KEY_NOT_FOUND_IN_BLOCK;   
         }
-        
+        entry.key_ = key;
         return RC::SUCCESS;
     }
 

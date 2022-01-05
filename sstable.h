@@ -99,7 +99,7 @@ public:
         assert(block_offset_index_ > 0);
 
         min_key_ = indexblock_.offsets(0).base_key();
-
+        //min_key_ = Slice(indexblock_.offsets(0).base_key());
 
         std::string max_block_base_key = indexblock_.offsets(block_offset_index_ - 1).base_key();
         uint64_t max_block_offset = indexblock_.offsets(block_offset_index_ - 1).offset();
@@ -119,7 +119,6 @@ public:
         uint16_t diff = header >> 16;
         std::string diff_key(block_content.data() + last_offset + 4, diff);
         max_key_ = max_block_base_key.substr(0, overlap) + diff_key;
-
         return RC::SUCCESS;
     }
 

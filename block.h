@@ -30,20 +30,26 @@ public:
         return value;
     }
 
-    const std::string find(const std::string& key) {
+    bool find(const std::string& key, Entry& entry) {
         uint32_t min = 0, max = offset_.size();
         while (min <= max) {
             uint32_t mid = min + (max - min) / 2;
             std::string key2 = getKey(mid);
             if (key == key2) {
-                return getValue(mid);
+                const std::string value = getValue(mid);
+                char* buf = new char[value.size() + 1];
+                memcpy(buf, value.data(), value.size());
+                buf[value.size()] = '\0';
+                entry.value_.reset(buf, value.size());
+                // entry.value_ = getValue(mid);
+                return true;
             } else if (key > key2) {
                 min = mid + 1;
             } else {
                 max = mid - 1;
             }
         }
-        return "";
+        return false;
     }
 private:
     const std::string getKey(uint32_t index) {
@@ -52,8 +58,8 @@ private:
         uint16_t overlap = header;
         uint16_t diff = header >> 16;
         std::string diff_key(content_.data() + cur_offset + 4, diff);
-        std::string value(base_key_.substr(0, overlap) + diff_key);
-        return value;
+        std::string key(base_key_.substr(0, overlap) + diff_key);
+        return key;
     }
 
     const std::string getValue(uint32_t index) {

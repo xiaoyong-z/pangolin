@@ -72,8 +72,9 @@ public:
 	}
 
 	static LevelManager* newLevelManager(const std::shared_ptr<Options>& options) {
+		ManifestFile* manifest_file = ManifestFile::openManifestFile(options);
 		// ManifestFile* manifest_file_ = new ;
-        LevelManager* level_manger = new LevelManager(options);
+        LevelManager* level_manger = new LevelManager(options, manifest_file);
         // lm.opt_ = opt_
         // // 读取manifest文件构建管理器
         // if err := lm.loadManifest(); err != nil {
@@ -124,7 +125,8 @@ public:
 			}
 		}
 
-		return level_manager_->get(key.ToString(), entry);
+		rc = level_manager_->get(key, entry);
+		return rc;
 	}
 
 	RC flush() {

@@ -103,14 +103,43 @@ public:
             assert(file > 0);
             manifestFile->setFile(file);
         } else {
-            
+            manifestFile->setFile(file); 
+            RC result = manifestFile->replayManifest();
+            if (result != RC::SUCCESS) {
+                return nullptr;
+            }
         }
-        // MmapFile* mmap_file = MmapFile::newMmapFile(file_opt->file_name_, file_opt->flag_, file_opt->max_sz_);
-        // if (mmap_file == nullptr) {
-        //     return nullptr;
-        // }
-        // ManifestFile* wal_file = new ManifestFile(mmap_file, opt);
-        // return wal_file;
+        return manifestFile;
+    }
+
+    RC replayManifest() {
+        char buf[ManifestConfig::changeHeadSize];
+        size_t count = read(file_, buf, ManifestConfig::changeHeadSize);
+        if (count != ManifestConfig::changeHeadSize) {
+            return RC::MANIFEST_REPLAY_FAIL;
+        }
+        
+        if (memcmp(buf, ManifestConfig::magicNum.data(), ManifestConfig::magicNum.size()) != 0) {
+            return RC::MANIFEST_REPLAY_FAIL;
+        }
+
+        if (memcmp(buf + 4, ManifestConfig::versionNum.data(), ManifestConfig::versionNum.size()) != 0) {
+            return RC::MANIFEST_REPLAY_FAIL;
+        }
+
+        uint32_t change_len = decodeFix32(buf + 8);
+        uint32_t crc = decodeFix32(buf + 12);
+
+        char serialize_buf[change_len];
+        count = read(file_, serialize_buf, change_len);
+        if (count != change_len) {
+            return RC::MANIFEST_REPLAY_FAIL;
+        }
+
+        pb::ManifestChangeSet set;
+        set.ParseFromArray(serialize_buf, change_len);
+
+        return manifest_->applyChangeSet(set);
     }
 
     RC addTableMeta(int level, const std::shared_ptr<Table>& table) {
@@ -168,7 +197,7 @@ public:
         std::string write_buf;
         int manifest_creations = manifest_->getCreations();
         pb::ManifestChange temp;
-        std::cout << temp.ByteSize() << std::endl;
+        // std::cout << temp.ByteSize() << std::endl;
         write_buf.resize(8 + manifest_creations * temp.ByteSize() + 8);
         write_buf.append(ManifestConfig::magicNum);
         write_buf.append(ManifestConfig::versionNum);
@@ -183,7 +212,7 @@ public:
         }
         std::string serialize_set = set.SerializeAsString();
         uint32_t crc = crc32c::Value(serialize_set.data(), serialize_set.size());
-        uint32_t change_len = serialize_set.size() + 4;
+        uint32_t change_len = serialize_set.size();
         encodeFix32(&write_buf, change_len);
         encodeFix32(&write_buf, crc);
         write_buf.append(serialize_set);
