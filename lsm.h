@@ -20,7 +20,7 @@ public:
 
 		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_manager_.get());
 		if (result != RC::SUCCESS) {
-			
+			return nullptr;
 		}
 		return lsm;
 	}
@@ -50,7 +50,6 @@ public:
 
 	static std::shared_ptr<MemTable> newMemTable(const std::shared_ptr<Options>& options, LevelManager* level_manager) {
         uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
-		// uint32_t fid = 1;
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);

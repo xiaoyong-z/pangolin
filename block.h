@@ -71,7 +71,7 @@ private:
             std::string value(content_.data() + cur_offset + 4 + diff + 8, next_offset - (cur_offset + 4 + diff + 8));
             return value;
         } else {
-            std::string value(content_.data() + cur_offset + 4 + diff + 8, keys_len_ - (cur_offset + 4 + diff + 4));
+            std::string value(content_.data() + cur_offset + 4 + diff + 8, keys_len_ - (cur_offset + 4 + diff + 8));
             return value;
         }
     }

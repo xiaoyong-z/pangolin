@@ -41,6 +41,10 @@ public:
         assert(rc == RC::SUCCESS);
     }
 
+    void close() {
+        wal_file_->close();
+    }
+
     std::unique_ptr<WALFile> wal_file_;
     std::unique_ptr<SkipList> skipList_;
 };

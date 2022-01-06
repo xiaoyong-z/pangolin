@@ -29,7 +29,13 @@ public:
         if (file_ == nullptr) {
             return RC::WAL_UNINTIALIZE;
         }
-        file_->close();
+        std::string filename;
+        RC rc = file_->getFilename(filename);
+        assert(rc == RC::SUCCESS);
+        rc = file_->close();
+        assert(rc == RC::SUCCESS);
+        assert(remove(filename.data()) == 0);
+        return RC::SUCCESS;
     }
 
     RC write(Entry* entry) {

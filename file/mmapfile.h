@@ -244,6 +244,15 @@ class MmapFile: public File{
         return RC::SUCCESS;
     }
 
+    RC getFilename(std::string& filename) {
+        if (mmap_data_ == nullptr) {
+            LOG("mmap is not initialized: %s", filename_.c_str());
+            return RC::MMAPFILE_MMAP_UNINITIALIZE;
+        }
+        filename = filename_;
+        return RC::SUCCESS;
+    }
+
 
    private:
     char* mmap_data_;

@@ -68,7 +68,7 @@ public:
             levels_[level].tables_.push_back(table);
         }
 
-        cur_file_id_.fetch_add(max_fid);
+        cur_file_id_.fetch_add(max_fid + 1);
 
         if (levels_.size() == 0) {
             levels_.emplace_back();
@@ -93,6 +93,7 @@ public:
             builder->insert(iterator->get());
         }
         table->flush(builder);
+        memtable->close();
         table->open();
         levels_[0].tables_.push_back(table);
         manifest_file_->addTableMeta(0, table);
