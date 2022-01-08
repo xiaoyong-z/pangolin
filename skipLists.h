@@ -152,7 +152,7 @@ public:
         max_height_ = 0;
         arena_ = Arena::Instance();
         header_ = allocateNewNode(-1, SKIPLIST_MAX_HEIGHT, nullptr);
-
+        entry_count = 0;
         // header_ = new SkipNode(-1, SKIPLIST_MAX_HEIGHT);
     }
 
@@ -311,7 +311,12 @@ public:
             skip_node->noBarrier_SetNext(i, prev_[i]->noBarrier_Next(i));
             prev_[i]->setNext(i, skip_node);
         }
+        entry_count++;
         return RC::SUCCESS;
+    }
+
+    int getEntryCount() {
+        return entry_count;
     }
 
 private:
@@ -319,5 +324,6 @@ private:
     Arena* arena_;
     SkipNode* header_;
     std::atomic<int> max_height_;
+    int entry_count;
 };
 #endif

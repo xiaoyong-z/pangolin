@@ -97,6 +97,9 @@ public:
         bloom_filter_.reset(indexblock_.release_bloom_filter());
         
         block_offset_index_ = indexblock_.offsets_size();
+        if (block_offset_index_ == 0) {
+            return RC::SUCCESS;
+        }
         assert(block_offset_index_ > 0);
 
         min_key_ = indexblock_.offsets(0).base_key();

@@ -45,6 +45,10 @@ public:
         wal_file_->close();
     }
 
+    int getEntryCount() {
+        return skipList_->getEntryCount();
+    }
+
     std::unique_ptr<WALFile> wal_file_;
     std::unique_ptr<SkipList> skipList_;
 };

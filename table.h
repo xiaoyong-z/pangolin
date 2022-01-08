@@ -65,7 +65,7 @@ public:
     }
 
     uint64_t getCacheBlockId(uint32_t block_index) {    
-        return block_index || static_cast<uint64_t>(fd_) << 32;
+        return static_cast<uint64_t>(block_index) | static_cast<uint64_t>(fd_) << 32;
     }
 
     uint32_t getFD() {

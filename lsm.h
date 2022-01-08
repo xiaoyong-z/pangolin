@@ -40,7 +40,11 @@ public:
         }
 
 		for (const auto & iterator: wal_file_map) {
-			immutables.push_back(openMemTable(options, iterator.first));
+			std::shared_ptr<MemTable> memtable = openMemTable(options, iterator.first);
+			if (memtable->getEntryCount() == 0) {
+				continue;
+			}
+			immutables.push_back(memtable);
 			// std::cout << ite.second << std::endl;
 		}
 
@@ -49,7 +53,7 @@ public:
     }
 
 	static std::shared_ptr<MemTable> newMemTable(const std::shared_ptr<Options>& options, LevelManager* level_manager) {
-        uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
+        uint32_t fid = level_manager->cur_file_id_.load();
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->ssTable_max_sz_);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);
