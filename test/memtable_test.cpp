@@ -1,7 +1,3 @@
-// Copyright (c) 2011 The LevelDB Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file. See the AUTHORS file for names of contributors.
-
 #include <atomic>
 #include <set>
 #include <string>
@@ -20,7 +16,7 @@ TEST(MemTableTest, BasicTest) {
     file_opt->file_name_ = file_name_;
     file_opt->dir_ = opt->work_dir_;
     file_opt->flag_ = O_CREAT | O_RDWR;
-    file_opt->max_sz_ = int(opt->ssTable_max_sz_);
+    file_opt->max_sz_ = int(opt->SSTable_max_sz);
 
     WALFile* wal_ptr = WALFile::newWALFile(file_opt);
     if (wal_ptr == nullptr) {

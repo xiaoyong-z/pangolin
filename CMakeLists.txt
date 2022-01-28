@@ -18,6 +18,7 @@ include_directories(${PROTO_GEN_CXX_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/file)
 include_directories(${CMAKE_SOURCE_DIR}/util)
+include_directories(${CMAKE_SOURCE_DIR}/lsm)
 include_directories(${CMAKE_SOURCE_DIR}/third_party/parallel-hashmap/parallel_hashmap)
 
 
@@ -30,19 +31,26 @@ include_directories(
     third_party/xxhashct
 )
 
+set(SRC /home/parallels/metakv/)
+
+FILE (GLOB ALL_SOURCES "*.cpp" "./file/*.cpp" "./util/*.cpp" "./util/*.cc" "./lsm/*.cpp")
+
+message("hheloo" ${ALL_SOURCES})
+
 function(meta_test test_file)
     get_filename_component(test_target_name "${test_file}" NAME_WE)
     add_executable("${test_target_name}" "")
-    target_sources("${test_target_name}" PRIVATE  "${test_file}" util/crc32c.cc util/codec.cpp file/mmapfile.cpp file/wal.cpp skipLists.cpp)
+    target_sources("${test_target_name}" PRIVATE  "${test_file}" ${ALL_SOURCES})
     target_link_libraries("${test_target_name}" gmock gtest nlohmann_json::nlohmann_json proto_gen_cxx)
     add_test(NAME "${test_target_name}" COMMAND "${test_target_name}")
 endfunction(meta_test)
 
-meta_test("skipListsTest.cpp")
-meta_test("lsm_test.cpp")
-meta_test("bloomFilterTest.cpp")
-meta_test("memtable_test.cpp")
-meta_test("recovery_test.cpp")
+meta_test("test/skipListsTest.cpp")
+meta_test("test/lsm_test.cpp")
+meta_test("test/bloomFilterTest.cpp")
+meta_test("test/memtable_test.cpp")
+meta_test("test/recovery_test.cpp")
+meta_test("test/thread_test.cpp")
 
 execute_process (
     COMMAND bash -c "rm -rf work_test*"

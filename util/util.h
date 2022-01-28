@@ -48,4 +48,8 @@ namespace WALConfig {
     static const std::string filePostfix = "wal";
 }
 
+namespace CompactionConfig {
+    static const int compaction_duration = 50;
+}
+
 #endif

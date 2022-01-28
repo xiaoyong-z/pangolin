@@ -1,12 +1,9 @@
-// Copyright (c) 2011 The LevelDB Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file. See the AUTHORS file for names of contributors.
 #include <string>
 #include <vector>
 #include <filesystem>
 #include "gtest/gtest.h"
 #include "skipLists.h"
-#include "levels.h"
+#include "levelsManager.h"
 #include "memtable.h"
 #include "wal.h"
 #include "file.h"
@@ -68,7 +65,7 @@ TEST(LSM_TEST, basic) {
     //     file_opt->file_name_ = file_name_;
     //     file_opt->dir_ = opt->work_dir_;
     //     file_opt->flag_ = O_CREAT | O_RDWR;
-    //     file_opt->max_sz_ = int(opt->ssTable_max_sz_);
+    //     file_opt->max_sz_ = int(opt->SSTable_max_sz);
     //     WALFile* wal_ptr = WALFile::newWALFile(file_opt);
     //     if (wal_ptr == nullptr) {
     //         printf("wal file create failed");
@@ -81,7 +78,7 @@ TEST(LSM_TEST, basic) {
     //     for (size_t i = 0; i < vec.size(); i++) {
     //         memtable.set(vec[i]);
     //     }
-    //     std::unique_ptr<LevelManager> level_manager(LevelManager::newLevelManager(opt));
+    //     std::unique_ptr<LevelsManager> level_manager(LevelsManager::newLevelManager(opt));
     //     RC result = level_manager->flush(memtable);
     //     if (result != RC::SUCCESS) {
     //         printf("flush failed");

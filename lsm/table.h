@@ -4,7 +4,7 @@
 #include "util.h"
 #include "builder.h"
 #include "cache.h"
-class LevelManager;
+class LevelsManager;
 class Table {
 private:
     Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id), crc_(0) {}
