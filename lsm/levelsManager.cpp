@@ -17,8 +17,8 @@ LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, ManifestFi
     std::unordered_map<uint32_t, Manifest::TableManifest>& tables_manifest = manifest_file_->getTables();
 
     int max_level_num = options->getMaxLevelNum();
-    for (int i = 0; i < max_level_num; i++) {
-        // levels_.emplace_back();
+    for (int i = 0; i <= max_level_num; i++) {
+        levels_.emplace_back(new LevelHandler(i));
     }
 
     for (const auto& file_id : sstable_file_id) {
@@ -35,14 +35,14 @@ LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, ManifestFi
         if (crc != table->getCRC()) {
             assert(false);
         }
-        levels_[level].tables_.push_back(table);
+        levels_[level]->flush(table);
     }
 
     cur_file_id_.fetch_add(max_fid + 1);
 }
 
 RC LevelsManager::get(const Slice& key, Entry& entry) {
-    return levels_[0].level0Get(key, entry, opt_);
+    return levels_[0]->level0Get(key, entry, opt_);
 }
 
 RC LevelsManager::flush(const std::shared_ptr<MemTable>& memtable) {
@@ -60,9 +60,26 @@ RC LevelsManager::flush(const std::shared_ptr<MemTable>& memtable) {
     table->flush(builder);
     memtable->close();
     table->open();
-    levels_[0].tables_.push_back(table);
-    // levels_[0]
+    
+    levels_[0]->flush(table);
     manifest_file_->addTableMeta(0, table);
 
     return RC::SUCCESS;
+}
+
+
+uint64_t LevelsManager::getLevelSize(int level_num) {
+    assert(level_num < opt_->getMaxLevelNum());
+    return levels_[level_num]->getTableNum();
+ }
+
+std::vector<std::shared_ptr<Table>>& LevelsManager::getTables(int level_num) {
+    assert(level_num < opt_->getMaxLevelNum());
+    return levels_[level_num]->getTables();
+}
+
+std::shared_ptr<LevelHandler>& LevelsManager::getLevelHandler(int level_num) {
+    assert(level_num <= opt_->getMaxLevelNum());
+    return levels_[level_num];
+
 }

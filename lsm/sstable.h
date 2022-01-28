@@ -70,7 +70,7 @@ public:
         return file_->bytes(offset, size, mmap_addr);
     }
     
-    RC init(uint32_t& crc) {
+    RC init(uint32_t& crc, uint64_t& size) {
         char* mmap_ptr;
         RC result = file_->get_mmap_ptr(mmap_ptr);
         if (result != RC::SUCCESS) {
@@ -78,6 +78,7 @@ public:
         }
         raw_ptr_ = mmap_ptr;
         uint64_t sstable_len = decodeFix64(mmap_ptr);
+        size = sstable_len;
         mmap_ptr += sstable_len;
         uint32_t check_sum_len = decodeFix32(mmap_ptr - sizeof(uint32_t));
         mmap_ptr -= sizeof(uint32_t);
@@ -129,6 +130,14 @@ public:
     BlockOffsetsIterator* newIterator(){
         BlockOffsetsIterator* iterator = new BlockOffsetsIterator(block_offset_index_, indexblock_);
         return iterator;
+    }
+
+    inline std::string& getMinKey() {
+        return min_key_;
+    }
+
+    inline std::string& getMaxKey() {
+        return max_key_;
     }
 
 private:

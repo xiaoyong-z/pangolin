@@ -145,7 +145,7 @@ public:
 		int compaction_thread_num = options_->getCompactionThreadNum();
 		for (int i = 0; i < compaction_thread_num; i++) {
 			threads_.emplace_back(std::make_unique<Thread>());
-			Compaction* compaction = new Compaction(getLevelManager(), i);
+			Compaction* compaction = new Compaction(options_, getLevelManager(), i);
 			threads_[i]->start(compaction);
 		}
 		return RC::SUCCESS;

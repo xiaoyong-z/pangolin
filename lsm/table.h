@@ -7,7 +7,7 @@
 class LevelsManager;
 class Table {
 private:
-    Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id), crc_(0) {}
+    Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id), crc_(0), refs_(0) {}
 public:
     static Table* NewTable(const std::string& dir_name, uint32_t file_id, uint64_t sstable_max_sz) {
         std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
@@ -60,7 +60,7 @@ public:
     }
 
     RC open() {
-        sstable_->init(crc_);
+        sstable_->init(crc_, size_); 
         return RC::SUCCESS;
     }
 
@@ -68,18 +68,41 @@ public:
         return static_cast<uint64_t>(block_index) | static_cast<uint64_t>(fd_) << 32;
     }
 
-    uint32_t getFD() {
+    inline uint32_t getFD() const {
         return fd_;
     }
 
-    uint32_t getCRC() {
+    inline uint32_t getCRC() const {
         assert(crc_ != 0);
         return crc_;
     }
+
+    inline const uint64_t getSize() const {
+        return size_;
+    }
+
+    inline std::string& getMinKey() {
+        return sstable_->getMinKey();
+    }
+
+    inline std::string& getMaxKey() {
+        return sstable_->getMaxKey();
+    }
+
+    void increaseRef() {
+        refs_.fetch_add(1);
+    }
+
+    void decreaseRef() {
+        refs_.fetch_sub(1);
+    }
+
 
 private:
     std::unique_ptr<SSTable> sstable_;
     uint32_t fd_;
     uint32_t crc_;
+    uint64_t size_;
+    std::atomic<uint32_t> refs_;
 };
 #endif

@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <cassert>
+#include <shared_mutex>
 #include "rc.h"
 #include "options.h"
 #include "slice.h"
@@ -14,6 +15,9 @@
 #define LOG printf
 #define ALIGN_NUM 8
 
+using RWLock = std::shared_mutex;
+using WriteLock = std::unique_lock<RWLock>;
+using ReadLock = std::shared_lock<RWLock>;
 class Util {
 public:
     static char* align(char* ptr) {
@@ -26,6 +30,14 @@ public:
 
     static inline std::string filePathJoin(const std::string& path, uint32_t fid, const std::string& postfix) {
         return path + "/" + std::to_string(fid) + "." + postfix;
+    }
+
+    static int compareKey(const std::string& strA, const std::string& strB) {
+        return strA.compare(strB);
+    }
+
+    static int compareBytes(const std::string& strA, const std::string& strB) {
+        return strA.compare(strB);
     }
 };
 
@@ -50,6 +62,7 @@ namespace WALConfig {
 
 namespace CompactionConfig {
     static const int compaction_duration = 50;
+    static const int level0CompactionThreadshold = 10;
 }
 
 #endif

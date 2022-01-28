@@ -18,10 +18,18 @@ public:
 
     RC flush(const std::shared_ptr<MemTable>& memtable); 
 
+    void setLevel0();
+    
+    uint64_t getLevelSize(int level_num);
+
+    std::vector<std::shared_ptr<Table>>& getTables(int level_num);
+
+    std::shared_ptr<LevelHandler>& getLevelHandler(int level_num);
+
 private:
     std::atomic<uint32_t> cur_file_id_;
     std::shared_ptr<Options> opt_;
-    std::vector<LevelHandler> levels_;
+    std::vector<std::shared_ptr<LevelHandler>> levels_;
     std::unique_ptr<ManifestFile> manifest_file_;
     Cache cache;
 };

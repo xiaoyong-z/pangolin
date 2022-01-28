@@ -2,26 +2,26 @@
 #define COMPACTION_H
 #include "levelsManager.h"
 #include "thread.h"
+#include "keyrange.h"
 class Compaction : public Runnable {
 public:
-    // compaction id 1 handles level 1 compaction, id 2 handles level 2 compaction
-    Compaction(std::shared_ptr<LevelsManager>& level_manager, int compaction_id): 
-        level_manager_(level_manager), compaction_id_(compaction_id) {}
-    
-    ~Compaction() override {}
+    // id 1 thread handles level 1 compaction, id 2 thread handles level 2 compaction
+    Compaction(const std::shared_ptr<Options>& options_, std::shared_ptr<LevelsManager>& level_manager, int level_id);
+    ~Compaction() override;
+    void run() override;
+    void init();
+    bool needCompaction();
+    void doCompaction();
+    void generateCompactionPlan();
+    void fillTablesL0ToL1();
+    void fillTablesLnToLnp1();
 
-    void run() override {
-        while (true) {
-            std::cout << "compactor: " << compaction_id_ << " working..." <<  std::endl;
-            
-
-            sleep(CompactionConfig::compaction_duration);
-        }
-    }
 
 private:
-
     std::shared_ptr<LevelsManager> level_manager_;
-    int compaction_id_;
+    std::shared_ptr<LevelHandler> this_level_;
+    std::shared_ptr<LevelHandler> next_level_;
+    int level_id_;
+    uint64_t cur_level_max_size_;
 };
 #endif
