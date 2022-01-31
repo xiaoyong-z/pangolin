@@ -95,10 +95,28 @@ private:
     uint32_t pos_;
     uint32_t end_;
     const pb::IndexBlock& index_block_; 
-    std::shared_ptr<BlockIterator> block_iterator_;
+    std::shared_ptr<Iterator> block_iterator_;
 };
 
-// class TableIterator: public Iterator {
+class TableMergeIterator: public Iterator {
+public:
+    TableMergeIterator(const std::vector<std::shared_ptr<Table>>& tables);
+    static std::shared_ptr<TableMergeIterator> NewIterator(const std::vector<std::shared_ptr<Table>>& tables);
+    ~TableMergeIterator();
+    void Close() override;
+    void Rewind() override;
+    bool Seek(const std::string& key) override;
+    bool Valid() override;
+    void Next() override;
+    std::string getKey() override;
+    std::string getValue() override;
+    void getEntry(Entry& entry) override;
 
-// };
+private:
+    void Update();
+
+    const std::vector<std::shared_ptr<Table>>& tables_;
+    std::vector<std::shared_ptr<Iterator>> iterators_; 
+    int min_iterator_;
+};
 #endif 

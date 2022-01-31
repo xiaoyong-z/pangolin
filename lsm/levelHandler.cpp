@@ -4,7 +4,7 @@
 RC LevelHandler::level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
     for (size_t i = 0; i < tables_.size(); i++) {
         std::cout << "scan this table: " << std::endl; 
-        Table::scan(tables_);
+        Table::scan(tables_[i]);
         if (Table::get(tables_[i], key, entry, opt) == RC::SUCCESS) {
             return RC::SUCCESS;
         }

@@ -17,7 +17,7 @@ Compaction::~Compaction() {
 void Compaction::run() {
     init();
     while (true) {
-        std::cout << "compactor: " << level_id_ << " working..." <<  std::endl;
+        // std::cout << "compactor: " << level_id_ << " working..." <<  std::endl;
         // if (needCompaction()) {
         //     doCompaction();
         // }

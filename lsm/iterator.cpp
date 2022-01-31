@@ -157,7 +157,7 @@ TableIterator::TableIterator(const std::shared_ptr<Table>& table):
     updateBlock();
 }
 
-std::shared_ptr<TableIterator> NewIterator(const std::shared_ptr<Table>& table) {
+std::shared_ptr<TableIterator> TableIterator::NewIterator(const std::shared_ptr<Table>& table) {
     std::shared_ptr<TableIterator> iterator = std::make_shared<TableIterator>(table);
     return iterator;
 }
@@ -241,4 +241,85 @@ void TableIterator::updateBlock(uint32_t pos) {
     const pb::BlockOffset& blockOffset = getBlockOffset(pos); 
     std::shared_ptr<Block> block = std::make_shared<Block>(blockOffset, table_->getSSTable().get());
     block_iterator_ = std::make_shared<BlockIterator>(block);
+}
+
+TableMergeIterator::TableMergeIterator(const std::vector<std::shared_ptr<Table>>& tables): tables_(tables) {
+    Rewind();
+}
+
+std::shared_ptr<TableMergeIterator> TableMergeIterator::NewIterator(const std::vector<std::shared_ptr<Table>>& tables) {
+    std::shared_ptr<TableMergeIterator> iterator = std::make_shared<TableMergeIterator>(tables);
+    return iterator;
+}
+
+TableMergeIterator::~TableMergeIterator() {
+
+}
+
+void TableMergeIterator::Close() {
+
+}
+
+void TableMergeIterator::Rewind() {
+    iterators_.clear();
+    for (size_t i = 0; i < tables_.size(); i++) {
+        iterators_.emplace_back(TableIterator::NewIterator(tables_[i]));
+    }
+    Update();
+}
+
+bool TableMergeIterator::Seek(const std::string& key) {
+    // unimplemanted
+    assert(false);
+}
+
+bool TableMergeIterator::Valid() {
+    for (size_t i = 0; i < tables_.size(); i++) {
+        if (iterators_[i]->Valid()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void TableMergeIterator::Next() {
+    assert(Valid());
+    iterators_[min_iterator_]->Next();
+    Update();
+}
+
+std::string TableMergeIterator::getKey() {
+    assert(Valid());
+    return iterators_[min_iterator_]->getKey();
+}
+
+std::string TableMergeIterator::getValue() {
+    assert(Valid());
+    return iterators_[min_iterator_]->getValue();
+}
+
+void TableMergeIterator::getEntry(Entry& entry) {
+    assert(Valid());
+    return iterators_[min_iterator_]->getEntry(entry);
+}
+
+void TableMergeIterator::Update() {
+    min_iterator_ = -1;
+    std::string min_key;
+    for (size_t i = 0; i < tables_.size(); i++) {
+        if (iterators_[i]->Valid() == false) {
+            continue;
+        }
+        if (i == 0) {
+            min_iterator_ = i;
+            min_key = iterators_[i]->getKey();
+            continue;
+        }
+        std::string key = iterators_[i]->getKey();
+        if (Util::compareKey(key, min_key) < 0) {
+            key = min_key;
+            min_iterator_ = i;
+        }
+    }
+
 }
