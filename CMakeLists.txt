@@ -19,6 +19,9 @@ include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/file)
 include_directories(${CMAKE_SOURCE_DIR}/util)
 include_directories(${CMAKE_SOURCE_DIR}/lsm)
+include_directories(${CMAKE_SOURCE_DIR}/memtable)
+include_directories(${CMAKE_SOURCE_DIR}/compaction)
+include_directories(${CMAKE_SOURCE_DIR}/table)
 include_directories(${CMAKE_SOURCE_DIR}/third_party/parallel-hashmap/parallel_hashmap)
 
 
@@ -33,7 +36,14 @@ include_directories(
 
 set(SRC /home/parallels/metakv/)
 
-FILE (GLOB ALL_SOURCES "*.cpp" "./file/*.cpp" "./util/*.cpp" "./util/*.cc" "./lsm/*.cpp")
+FILE (GLOB ALL_SOURCES "*.cpp" 
+    "./file/*.cpp" 
+    "./util/*.cpp" 
+    "./util/*.cc" 
+    "./lsm/*.cpp"
+    "./table/*.cpp"
+    "./compaction/*.cpp"
+    "./memtable/*.cpp" )
 
 message("hheloo" ${ALL_SOURCES})
 

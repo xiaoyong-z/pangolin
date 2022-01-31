@@ -3,13 +3,22 @@
 #include "keyrange.h"
 #include "table.h"
 #include "levelHandler.h"
-struct compactionPlan {
-    compactionPlan(int compactor_id, const KeyRange& this_range, const KeyRange& next_range, 
+struct CompactionPlan {
+    CompactionPlan(int compactor_id, const KeyRange& this_range, const KeyRange& next_range, 
         const std::vector<std::shared_ptr<Table>>& this_tables, const std::vector<std::shared_ptr<Table>>& next_tables, 
         const std::shared_ptr<LevelHandler>& this_level_handler, const std::shared_ptr<LevelHandler>& next_level_handler,
         int this_level_num, int next_level_num): compactor_id_(compactor_id), this_range_(this_range), next_range_(next_range),
         this_tables_(this_tables), next_tables_(next_tables), this_level_handler_(this_level_handler), next_level_handler_(next_level_handler),
         this_level_num_(this_level_num), next_level_num_(next_level_num) {}
+    
+    CompactionPlan() {}
+
+    void clear() {
+        this_range_.clear();
+        next_range_.clear();
+        this_tables_.clear();
+        next_tables_.clear();
+    }
 
     int compactor_id_;
     KeyRange this_range_;

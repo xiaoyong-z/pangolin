@@ -14,11 +14,13 @@ public:
 
     std::vector<std::shared_ptr<Table>>& getTables();
 
-    void Lock();
-    void Unlock();
+    void RLock();
+    void UnRLock();
+    void WLock();
+    void UnWLock();
 
 private:
-    std::mutex mutex_;
+    RWLock rwLock_;
     int level_num_;
     std::vector<std::shared_ptr<Table>> tables_;
     std::atomic<uint64_t> level_size_;

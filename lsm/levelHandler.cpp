@@ -3,7 +3,7 @@
 
 RC LevelHandler::level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
     for (size_t i = 0; i < tables_.size(); i++) {
-        if (tables_[i]->get(key, entry, opt) == RC::SUCCESS) {
+        if (Table::get(tables_[i], key, entry, opt) == RC::SUCCESS) {
             return RC::SUCCESS;
         }
     }
@@ -31,10 +31,18 @@ std::vector<std::shared_ptr<Table>>& LevelHandler::getTables() {
     return tables_;
 }
 
-void LevelHandler::Lock() {
-    mutex_.lock();
+void LevelHandler::RLock() {
+    rwLock_.lock_shared();
 }
 
-void LevelHandler::Unlock() {
-    mutex_.unlock();
+void LevelHandler::UnRLock() {
+    rwLock_.unlock_shared();
+}
+
+void LevelHandler::WLock() {
+    rwLock_.lock();
+}
+
+void LevelHandler::UnWLock() {
+    rwLock_.unlock();
 }

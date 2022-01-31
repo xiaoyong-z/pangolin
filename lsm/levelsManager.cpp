@@ -45,7 +45,7 @@ RC LevelsManager::get(const Slice& key, Entry& entry) {
     return levels_[0]->level0Get(key, entry, opt_);
 }
 
-RC LevelsManager::flush(const std::shared_ptr<MemTable>& memtable) {
+RC LevelsManager::flush(std::shared_ptr<MemTable>& memtable) {
     uint32_t file_id = cur_file_id_.fetch_add(1);
     Table* table_raw = Table::NewTable(opt_->work_dir_, file_id, opt_->SSTable_max_sz);
     if (table_raw == nullptr) {
@@ -53,9 +53,11 @@ RC LevelsManager::flush(const std::shared_ptr<MemTable>& memtable) {
     }
     std::shared_ptr<Table> table(table_raw);
     std::shared_ptr<Builder> builder = std::make_shared<Builder>(opt_);
-    std::unique_ptr<SkipListIterator> iterator(memtable->skipList_->newIterator());
-    for (; iterator->hasNext() ; iterator->next()) {
-        builder->insert(iterator->get());
+    std::shared_ptr<SkipListIterator> iterator = SkipListIterator::NewIterator(memtable->getSkipList());
+    for (; iterator->Valid() ; iterator->Next()) {
+        Entry entry;
+        iterator->getEntry(entry);
+        builder->insert(entry);
     }
     table->flush(builder);
     memtable->close();

@@ -8,14 +8,14 @@
 class MemTable {
     friend class LSM;
 public: 
-    MemTable(std::unique_ptr<WALFile>&& wal_file, std::unique_ptr<SkipList>&& skiplist): 
-        wal_file_(std::move(wal_file)), skipList_(std::move(skiplist)){};
+    MemTable(std::unique_ptr<WALFile>&& wal, std::unique_ptr<SkipList>&& skiplist): 
+        wal_(std::move(wal)), skipList_(std::move(skiplist)){};
 
-    MemTable(WALFile* wal_file, SkipList* skiplist): 
-        wal_file_(wal_file), skipList_(skiplist){};
+    MemTable(WALFile* wal, SkipList* skiplist): 
+        wal_(wal), skipList_(skiplist){};
     
     RC set(Entry* entry) {
-        RC result = wal_file_->write(entry);
+        RC result = wal_->write(entry);
         if (result != RC::SUCCESS) {
             return result;
         }
@@ -28,11 +28,11 @@ public:
     }
 
     RC updateList(const std::shared_ptr<Options>& options) {
-        if (wal_file_.get() == nullptr || skipList_.get() == nullptr) {
+        if (wal_.get() == nullptr || skipList_.get() == nullptr) {
             return RC::MEMTABLE_UNINTIALIZE_FAIL;
         }
         
-        wal_file_->iterator(true, 0, skipList_.get(), replayFunction);
+        wal_->iterator(true, 0, skipList_.get(), replayFunction);
         return RC::SUCCESS;
     }
 
@@ -42,14 +42,22 @@ public:
     }
 
     void close() {
-        wal_file_->close();
+        wal_->close();
     }
 
     int getEntryCount() {
         return skipList_->getEntryCount();
     }
 
-    std::unique_ptr<WALFile> wal_file_;
-    std::unique_ptr<SkipList> skipList_;
+    std::shared_ptr<SkipList>& getSkipList() {
+        return skipList_;
+    }
+
+    std::shared_ptr<WALFile>& getWAL() {
+        return wal_;
+    }
+
+    std::shared_ptr<WALFile> wal_;
+    std::shared_ptr<SkipList> skipList_;
 };
 #endif

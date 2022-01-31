@@ -13,11 +13,3 @@ double calculateKeyScore(const Slice& key) {
     }
     return double(hash);
 }
-
-Entry SkipListIterator::get() {
-    Entry result;
-    const Slice key_find = skip_list_->getKey(it_->key_, it_->key_len_);
-    const ValueStruct value_find = skip_list_->getValue(it_->value_, it_->value_len_);
-    result.reset(key_find, value_find);
-    return result;
-}

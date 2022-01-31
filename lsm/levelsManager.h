@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "manifest.h"
 #include "levelHandler.h"
+#include "iterator.h"
 #include "file.h"
 class LevelHandler;
 class LevelsManager: public std::enable_shared_from_this<LevelsManager> {
@@ -16,7 +17,7 @@ public:
 
     RC get(const Slice& key, Entry& entry);
 
-    RC flush(const std::shared_ptr<MemTable>& memtable); 
+    RC flush(std::shared_ptr<MemTable>& memtable); 
 
     void setLevel0();
     

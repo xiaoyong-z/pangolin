@@ -36,6 +36,10 @@ struct Entry {
         return key_.size() + value_.size() + 8 + 8 + CRC_SIZE_LEN;
     }
 
+    void setKey(const Slice& key) {
+        key_ = key;
+    }
+
 
     // Entry(Entry && another): key_(std::move(another.key_)), value_(std::move(another.value_)){};
 

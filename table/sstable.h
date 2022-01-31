@@ -5,57 +5,11 @@
 #include "util.h"
 #include "kv.pb.h"
 #include "iterator.h"
-class BlockOffsetsIterator{
-    BlockOffsetsIterator(uint32_t block_offset_index, const pb::IndexBlock& indexblock): 
-        max_offset_index_(block_offset_index), cur_offset_index_(0), indexblock_(indexblock) {  }
-
-    friend class SSTable;
-public: 
-    bool hasNext() {
-        return cur_offset_index_ != max_offset_index_;
-    }
-
-    void next() {
-        cur_offset_index_++;
-    }
-
-    const uint32_t get() {
-        return cur_offset_index_;
-    }
-
-    const uint32_t find(const std::string& key) {
-        uint32_t min = 0, max = max_offset_index_ - 1;
-        while(min < max) {
-            uint32_t mid = min + (max - min) / 2 + 1;
-            assert(mid >= 0 && mid <= max_offset_index_ - 1);
-            const pb::BlockOffset& blockOffset = indexblock_.offsets(mid);
-            const std::string& base_key= blockOffset.base_key();
-            if (base_key == key) {
-                return mid;
-            } else if (base_key < key) {
-                min = mid;
-            } else {
-                max = mid - 1;
-            }
-        }
-        return min;
-    }
-
-    const pb::BlockOffset& getBlockOffset(uint32_t index) {
-        return indexblock_.offsets(index);
-    }
-
-private:
-    uint32_t max_offset_index_;
-    uint32_t cur_offset_index_;
-    const pb::IndexBlock& indexblock_;
-    
-};
+#include "mmapfile.h"
 class SSTable {
-    friend class Table;
     friend class Block;
 private:
-    SSTable(MmapFile* mmap_file): file_(mmap_file){}
+    SSTable(MmapFile* mmap_file): file_(mmap_file), max_version_(0){}
 public:
     static SSTable* newSSTableFile(const std::shared_ptr<FileOptions>& opt) {
         MmapFile* mmap_file = MmapFile::newMmapFile(opt->file_name_, opt->flag_, opt->max_sz_);
@@ -97,18 +51,18 @@ public:
         mmap_ptr -= index_len;
         bloom_filter_.reset(indexblock_.release_bloom_filter());
         
-        block_offset_index_ = indexblock_.offsets_size();
-        if (block_offset_index_ == 0) {
+        size_ = indexblock_.offsets_size();
+        if (size_ == 0) {
             return RC::SUCCESS;
         }
-        assert(block_offset_index_ > 0);
+        assert(size_ > 0);
 
         min_key_ = indexblock_.offsets(0).base_key();
         //min_key_ = Slice(indexblock_.offsets(0).base_key());
 
-        std::string max_block_base_key = indexblock_.offsets(block_offset_index_ - 1).base_key();
-        uint64_t max_block_offset = indexblock_.offsets(block_offset_index_ - 1).offset();
-        uint64_t max_block_len = indexblock_.offsets(block_offset_index_ - 1).len();
+        std::string max_block_base_key = indexblock_.offsets(size_ - 1).base_key();
+        uint64_t max_block_offset = indexblock_.offsets(size_ - 1).offset();
+        uint64_t max_block_len = indexblock_.offsets(size_ - 1).len();
 
         std::string block_content(raw_ptr_ + SSTABLE_SIZE_LEN + max_block_offset, max_block_len);
         
@@ -127,17 +81,28 @@ public:
         return RC::SUCCESS;
     }
 
-    BlockOffsetsIterator* newIterator(){
-        BlockOffsetsIterator* iterator = new BlockOffsetsIterator(block_offset_index_, indexblock_);
-        return iterator;
-    }
-
     inline std::string& getMinKey() {
         return min_key_;
     }
 
     inline std::string& getMaxKey() {
         return max_key_;
+    }
+
+    inline uint32_t getMaxVersion() {
+        return max_version_;
+    }
+
+    inline const pb::IndexBlock& getIndexBlock() {
+        return indexblock_;
+    }
+
+    inline uint32_t getSize() {
+        return size_;
+    }
+
+    inline std::string* getFilter() {
+        return bloom_filter_.get();
     }
 
 private:
@@ -147,7 +112,8 @@ private:
     std::string min_key_;
     std::string max_key_;
     std::unique_ptr<std::string> bloom_filter_;
-    uint32_t block_offset_index_;
+    uint32_t max_version_;
+    uint32_t size_;
 };
 
 #endif

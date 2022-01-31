@@ -4,9 +4,9 @@
 #include "table.h"
 #include "keyrange.h"
 #include "compactionPlan.h"
-class compactionState {
+class CompactionState {
 public:
-    compactionState(int max_level_num) {
+    CompactionState(int max_level_num) {
         for (int i = 0; i < max_level_num; i++) {
             levels_ranges_.emplace_back();
             levels_table_set_.emplace_back();
@@ -29,7 +29,7 @@ public:
         return false;
     }
 
-    bool compareAndAdd(const compactionPlan& plan) {
+    bool compareAndAdd(const CompactionPlan& plan) {
         WriteLock lock(rwLock_);
         if (overlapsWith(plan.this_level_num_, plan.this_range_)) {
             return false;
@@ -51,7 +51,7 @@ public:
 
     
 
-    bool remove(const compactionPlan& plan) {
+    bool remove(const CompactionPlan& plan) {
         WriteLock lock(rwLock_);
         eraseKeyRange(plan.this_level_num_, plan.this_range_);
         eraseKeyRange(plan.next_level_num_, plan.next_range_);
@@ -66,6 +66,7 @@ public:
         for (size_t i = 0; i < next_tables.size(); i++) {
             levels_table_set_[plan.next_level_num_].erase(next_tables[i]);
         }
+        return true;
     }
 
 private:

@@ -6,6 +6,7 @@
 #include "levelsManager.h"
 #include "file.h"
 #include "util.h"
+#include "compactionState.h"
 
 class LSM {
 	LSM(std::shared_ptr<Options> options):options_(options) {}
@@ -32,18 +33,18 @@ public:
 	static RC recoveryWAL(const std::shared_ptr<Options>& options, std::shared_ptr<MemTable>& memtable, 
 		std::vector<std::shared_ptr<MemTable>>& immutables, std::shared_ptr<LevelsManager>& level_manager) {
 
-        std::map<int, std::string> wal_file_map;
+        std::map<int, std::string> wal_map;
         for (const auto & entry : std::filesystem::directory_iterator(options->work_dir_)) {
 			const std::string& path = entry.path().string();
 			int suffix_position = path.find_last_of('.');
 			int last_slash_postion = path.find_last_of("/");
 			if (path.substr(suffix_position + 1) == WALConfig::filePostfix) {
-				wal_file_map.emplace(std::stoi(path.substr(last_slash_postion + 1, suffix_position - last_slash_postion - 1)), path);
-				// wal_file_names.push_back(path);
+				wal_map.emplace(std::stoi(path.substr(last_slash_postion + 1, suffix_position - last_slash_postion - 1)), path);
+				// wal_names.push_back(path);
 			}
         }
 
-		for (const auto & iterator: wal_file_map) {
+		for (const auto & iterator: wal_map) {
 			std::shared_ptr<MemTable> memtable = openMemTable(options, iterator.first);
 			if (memtable->getEntryCount() == 0) {
 				continue;
@@ -61,19 +62,19 @@ public:
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->SSTable_max_sz);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);
-		WALFile* wal_file = WALFile::newWALFile(file_opt);
-		assert(wal_file != nullptr);
+		WALFile* wal = WALFile::newWALFile(file_opt);
+		assert(wal != nullptr);
 		SkipList* skiplist = new SkipList();
-		return std::make_shared<MemTable>(wal_file, skiplist); 
+		return std::make_shared<MemTable>(wal, skiplist); 
 	}
 
 	static std::shared_ptr<MemTable> openMemTable(const std::shared_ptr<Options>& options, const uint32_t fid) {
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_RDONLY, options->SSTable_max_sz);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);
-		WALFile* wal_file = WALFile::newWALFile(file_opt);
-		assert(wal_file != nullptr);
+		WALFile* wal = WALFile::newWALFile(file_opt);
+		assert(wal != nullptr);
 		SkipList* skiplist = new SkipList();
-		std::shared_ptr<MemTable> memTable = std::make_shared<MemTable>(wal_file, skiplist);
+		std::shared_ptr<MemTable> memTable = std::make_shared<MemTable>(wal, skiplist);
 		memTable->updateList(options);
 		return memTable;
 	}
@@ -88,7 +89,7 @@ public:
     }
 
 	RC set(Entry* entry) {
-		if (memtable_->wal_file_->size() + entry->estimateWalEntrySize() > options_->mem_table_size_) {
+		if (memtable_->wal_->size() + entry->estimateWalEntrySize() > options_->mem_table_size_) {
 			immutables_.push_back(memtable_);
 			memtable_ = newMemTable(options_, level_manager_);
 		}
@@ -143,9 +144,10 @@ public:
 
 	RC startCompaction() {
 		int compaction_thread_num = options_->getCompactionThreadNum();
+		std::shared_ptr<CompactionState> state = std::make_shared<CompactionState>(compaction_thread_num);
 		for (int i = 0; i < compaction_thread_num; i++) {
 			threads_.emplace_back(std::make_unique<Thread>());
-			Compaction* compaction = new Compaction(options_, getLevelManager(), i);
+			Compaction* compaction = new Compaction(options_, state, getLevelManager(), i);
 			threads_[i]->start(compaction);
 		}
 		return RC::SUCCESS;

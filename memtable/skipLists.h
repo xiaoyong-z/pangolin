@@ -12,13 +12,6 @@
 #include "arena.h"
 #define SKIPLIST_MAX_HEIGHT 12
 struct SkipNode {
-    // SkipNode(double score, int height, Entry&& elem): score_(score), elem_(std::forward<Entry>(elem)), height_(height) {
-    //     nexts_ = new std::atomic<SkipNode*>[height_ + 1];
-    //     for (int i = 0; i < height_ + 1; i++) {
-    //         setNext(i, nullptr);
-    //     }
-    // }
-
     SkipNode(double score, int height): 
         key_(nullptr), key_len_(0), value_(nullptr), 
         value_len_(0), score_(score), height_(height) {
@@ -26,22 +19,8 @@ struct SkipNode {
             setNext(i, nullptr);
         }
     }
-    
-    // SkipNode(double score, int height): score_(score), height_(height){
-    //     nexts_ = new std::atomic<SkipNode*>[height_ + 1];
-    //     for (int i = 0; i < height_ + 1; i++) {
-    //         setNext(i, nullptr);
-    //     }
-    // }
 
-    ~SkipNode() {
-        // if (next(0)) {
-        //     delete next(0);
-        //     setNext(0, nullptr);
-        // }
-        // delete[] nexts_;
-        // nexts_ = nullptr;
-    }
+    ~SkipNode() {}
 
     SkipNode* next(int n) {
         assert(n >= 0);
@@ -78,73 +57,11 @@ private:
     std::atomic<SkipNode*> nexts_[1];
 };
 
-// template<typename std::string>
-// double calculateKeyScore(const std::string& key) {
-//     return 0;
-// }
-
-// double calculateKeyScore(const TestMove& key) {
-//     return key.score_;
-// }
-
-// double calculateKeyScore(const char* key) {
-//     int len = strlen(key);
-//     if (len > 8) {
-//         len = 8;
-//     }
-//     uint64_t hash = 0;
-//     for (int i = 0; i < len; i++) {
-//         int shift = 64 - 8 - i * 8;
-//         hash |= uint64_t(key[i]) << shift;
-//     }
-//     return double(hash);
-// }
-
 double calculateKeyScore(const Slice& key);
-
-// template<typename std::string>
-// int compareKey(const std::string& key1, const std::string& key2) {
-//     return 0;
-// }
-
-// inline int compareKey(const TestMove& key1, const TestMove& key2) {
-//     return key1.a_ < key2.a_;
-// }
-
-// inline int compareKey(const char* key1, const char* key2) {
-//     return strcmp(key1, key2);
-// }
 
 inline int compareKey(const Slice& key1, const Slice& key2) {
     return key1.compare(key2);
 }
-
-class SkipList;
-
-class SkipListIterator: public Iterator<Entry, std::string> {
-public:
-    friend class SkipList;
-    ~SkipListIterator() {};
-
-    bool hasNext() {
-        return it_ != nullptr;
-    }
-    void next() {
-        it_ = it_->next(0);
-    } 
-
-    Entry get();
-
-    const Entry& find(const std::string& key) {
-        // Todo
-        assert(false);
-        // return it_->elem_;
-    }
-
-private:
-    SkipNode* it_;
-    SkipList* skip_list_;
-};
 
 class SkipList {
 public:
@@ -153,16 +70,12 @@ public:
         arena_ = Arena::Instance();
         header_ = allocateNewNode(-1, SKIPLIST_MAX_HEIGHT, nullptr);
         entry_count = 0;
-        // header_ = new SkipNode(-1, SKIPLIST_MAX_HEIGHT);
     }
 
-    ~SkipList() {
-        // if (header_->next(0)) {
-        //     delete header_->next(0);
-        //     header_->setNext(0, nullptr);
-        // }
-        // delete header_;
-        // header_ = nullptr;
+    ~SkipList() {}
+
+    SkipNode* firstNode() {
+        return header_->next(0);
     }
 
     void update(SkipNode* node, Entry* elem) {
@@ -208,13 +121,6 @@ public:
     inline ValueStruct getValue(char* value_ptr, uint32_t value_len) const{
         ValueStruct value(value_ptr, value_len, decodeFix64(value_ptr + value_len));
         return value; 
-    }
-
-    SkipListIterator* newIterator(){
-        SkipListIterator* iterator = new SkipListIterator();
-        iterator->it_ = header_->next(0);
-        iterator->skip_list_ = this;
-        return iterator;
     }
 
     int getMaxHeight() {

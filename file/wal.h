@@ -21,8 +21,8 @@ public:
         if (mmap_file == nullptr) {
             return nullptr;
         }
-        WALFile* wal_file = new WALFile(mmap_file);
-        return wal_file;
+        WALFile* wal = new WALFile(mmap_file);
+        return wal;
     }
 
     RC close() {

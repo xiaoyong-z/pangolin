@@ -5,12 +5,37 @@
 
 class KeyRange {
 public:
-    KeyRange(): empty_(true) {}
+    KeyRange() noexcept: empty_(true) {}
 
-    KeyRange(const std::shared_ptr<Table>& table): 
+    KeyRange(const std::shared_ptr<Table>& table) noexcept: 
         min_key_(table->getMinKey()), max_key_(table->getMaxKey()), empty_(false) {}
     
-    KeyRange(const std::vector<std::shared_ptr<Table>>& tables): empty_(false) {
+    KeyRange(const std::vector<std::shared_ptr<Table>>& tables) noexcept: empty_(false) {
+        setKeyRange(tables);
+    }
+
+    KeyRange(KeyRange&& range) noexcept:
+        min_key_(std::move(range.min_key_)), 
+        max_key_(std::move(range.max_key_)), empty_(range.empty_) {}
+    
+    KeyRange(const KeyRange& range):
+        min_key_(range.min_key_), max_key_(range.max_key_), empty_(range.empty_) {}
+
+    KeyRange& operator=(KeyRange&& range) {
+        min_key_ = std::move(range.min_key_);
+        max_key_ = std::move(range.max_key_);
+        empty_ = range.empty_;
+        return *this;
+    }
+
+    KeyRange& operator=(const KeyRange& range) {
+        min_key_ = range.min_key_;
+        max_key_ = range.max_key_;
+        empty_ = range.empty_;
+        return *this;
+    }
+
+    void setKeyRange(const std::vector<std::shared_ptr<Table>>& tables) {
         if (tables.size() == 0) {
             return;
         }
@@ -26,7 +51,7 @@ public:
         }
     }
 
-    bool overlapWith(const KeyRange& range) {
+    bool overlapWith(const KeyRange& range) const {
         if (empty_) {
             return true;
         }
@@ -38,6 +63,47 @@ public:
             return false;
         }
         return true;
+    }
+
+    static bool compare(const std::shared_ptr<Table>& a, const std::shared_ptr<Table>& b){
+        return Util::compareKey(a->getMaxKey(), b->getMaxKey()) < 0;
+    }
+    
+    int lower_bound(const std::vector<std::shared_ptr<Table>>& tables) {
+        int left = 0, right = tables.size() - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            int cmp = Util::compareKey(min_key_, tables[mid]->getMaxKey());
+            if (cmp == 0)
+                return mid; 
+            else if (cmp < 0)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        return left;
+    }
+
+    int upper_bound(const std::vector<std::shared_ptr<Table>>& tables) {
+        int left = 0, right = tables.size() - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            int cmp = Util::compareKey(max_key_, tables[mid]->getMaxKey());
+            if (cmp == 0)
+                return mid; 
+            else if (cmp < 0)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        return left;
+    }
+
+    // tables here is sorted
+    std::pair<int, int> overlappingTables(std::vector<std::shared_ptr<Table>>& tables) {
+        int left = lower_bound(tables);
+        int right = upper_bound(tables);
+        return {left, right};
     }
 
     void extend(const KeyRange& range) {
@@ -67,6 +133,12 @@ public:
             return true;
         }
         return false;
+    }
+
+    void clear() {
+        min_key_ = "";
+        max_key_ = "";
+        empty_ = true;
     }
 
 private:
