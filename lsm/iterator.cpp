@@ -42,7 +42,13 @@ bool SkipListIterator::Seek(const std::string& key) {
 }
 
 std::string SkipListIterator::getKey() {
+    assert (Valid());
     return skip_list_->getKey(it_->key_, it_->key_len_).ToString();
+}
+
+std::string SkipListIterator::getValue() {
+    assert (Valid());
+    return skip_list_->getValue(it_->value_, it_->value_len_).value_.ToString();
 }
 
 void SkipListIterator::getEntry(Entry& entry) {
@@ -99,6 +105,7 @@ void BlockIterator::Next() {
 }
 
 std::string BlockIterator::getKey() {
+    assert (Valid());
     uint32_t cur_offset = offset_[pos_];
     uint32_t header = decodeFix32(content_.data() + cur_offset);
     uint16_t overlap = header;
@@ -106,6 +113,11 @@ std::string BlockIterator::getKey() {
     std::string diff_key(content_.data() + cur_offset + 4, diff);
     std::string value(base_key_.substr(0, overlap) + diff_key);
     return value;
+}
+
+std::string BlockIterator::getValue() {
+    assert (Valid());
+    return getValue(pos_);
 }
 
 void BlockIterator::getEntry(Entry& entry) {
@@ -174,18 +186,24 @@ bool TableIterator::Valid() {
 }
 
 void TableIterator::Next() {
-    if (block_iterator_->Valid()) {
-        block_iterator_->Next();
+    block_iterator_->Next();
+    if (block_iterator_->Valid()) { 
+        return;
     }
-    if (pos_ < end_) {
-        pos_++;
+    pos_++;
+    if (Valid()) {
         updateBlock();
-    }
+    }  
 } 
 
 std::string TableIterator::getKey() {
     assert (Valid());
     return block_iterator_->getKey();
+}
+
+std::string TableIterator::getValue() {
+    assert (Valid());
+    return block_iterator_->getValue();
 }
 
 void TableIterator::getEntry(Entry& entry) {

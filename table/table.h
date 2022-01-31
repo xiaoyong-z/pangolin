@@ -17,7 +17,10 @@ public:
 
     RC flush(const std::shared_ptr<Builder>& builder);
 
-    static RC get(std::shared_ptr<Table> table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);
+    static RC get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);
+
+    // For debug
+    static void scan(std::shared_ptr<Table>& table);
 
     RC open();
 

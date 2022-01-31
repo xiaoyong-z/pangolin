@@ -23,9 +23,9 @@ RC Table::flush(const std::shared_ptr<Builder>& builder) {
     return builder->flush(sstable_.get(), crc_);
 }
 
-RC Table::get(std::shared_ptr<Table> table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+RC Table::get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
     std::shared_ptr<SSTable>& sstable = table->getSSTable();
-    if (key.compare(sstable->getMaxKey()) < 0 || key.compare(sstable->getMaxKey()) > 0) {
+    if (key.compare(sstable->getMinKey()) < 0 || key.compare(sstable->getMaxKey()) > 0) {
         return RC::TABLE_EXCEED_MINMAX;
     }
 
@@ -42,6 +42,14 @@ RC Table::get(std::shared_ptr<Table> table, const Slice& key, Entry& entry, cons
     entry.setKey(key);
     entry.key_ = key;
     return RC::SUCCESS;
+}
+
+void Table::scan(std::shared_ptr<Table>& table) {
+    std::unique_ptr<TableIterator> iterator = std::make_unique<TableIterator>(table);
+    while (iterator->Valid()) {
+        std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
+        iterator->Next();
+    }
 }
 
 RC Table::open() {

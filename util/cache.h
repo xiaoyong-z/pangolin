@@ -26,6 +26,7 @@ public:
         // }
         // block = &blockCache_[bId];
         // return true;
+        return true;
     }
 private:
     parallel_unordered_map<uint64_t, Block> blockCache_;

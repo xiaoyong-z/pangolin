@@ -13,6 +13,7 @@ public:
     virtual void Rewind() = 0;
     virtual bool Seek(const std::string& key) = 0;
     virtual std::string getKey() = 0;
+    virtual std::string getValue() = 0;
     virtual void getEntry(Entry& entry) = 0;
 };
 
@@ -32,6 +33,7 @@ public:
     void Rewind() override;
     bool Seek(const std::string& key);
     std::string getKey() override;
+    std::string getValue() override;
     void getEntry(Entry& entry) override;
 
 private:
@@ -50,6 +52,7 @@ public:
     bool Valid() override;
     void Next() override;
     std::string getKey() override;
+    std::string getValue() override;
     void getEntry(Entry& entry) override;
 
 private:
@@ -76,6 +79,7 @@ public:
     bool Valid() override;
     void Next() override;
     std::string getKey() override;
+    std::string getValue() override;
     void getEntry(Entry& entry) override;
 
 private:

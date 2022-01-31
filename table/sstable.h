@@ -31,8 +31,7 @@ public:
             return result;
         }
         raw_ptr_ = mmap_ptr;
-        uint64_t sstable_len = decodeFix64(mmap_ptr);
-        size = sstable_len;
+        uint64_t sstable_len = decodeFix64(mmap_ptr); 
         mmap_ptr += sstable_len;
         uint32_t check_sum_len = decodeFix32(mmap_ptr - sizeof(uint32_t));
         mmap_ptr -= sizeof(uint32_t);
@@ -78,6 +77,7 @@ public:
         uint16_t diff = header >> 16;
         std::string diff_key(block_content.data() + last_offset + 4, diff);
         max_key_ = max_block_base_key.substr(0, overlap) + diff_key;
+        size = indexblock_.offsets().size();
         return RC::SUCCESS;
     }
 
