@@ -178,20 +178,9 @@ void Compaction::performCompaction() {
     pb::ManifestChangeSet change_set = manifest_file->buildChangeSet(plan_, new_tables);
     RC result = manifest_file->applyChangeSet(change_set);
     assert(result == RC::SUCCESS);
-    this_level_->getLevelSize();
-    // manifest_file_->addTableMeta(0, table);
 
+    this_level_->deleteTables(plan_.this_tables_);
+    next_level_->replaceTables(plan_.next_tables_, new_tables);
     
-    // // = std::make_shared<Builder>(opt_);
-    // std::shared_ptr<SkipListIterator> iterator = SkipListIterator::NewIterator(memtable->getSkipList());
-    // for (; iterator->Valid() ; iterator->Next()) {
-    //     Entry entry;
-    //     iterator->getEntry(entry);
-    //     builder->insert(entry);
-    // }
-
-    // two_level_tables.assign(plan_.this_tables_.begin(), plan_.this_tables_.end());
-    // std::vector<std::shared_ptr<Table>& next_tables = plan_.next_tables_;
-    
-
+    return;
 }

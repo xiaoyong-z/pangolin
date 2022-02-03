@@ -35,7 +35,11 @@ LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, ManifestFi
         if (crc != table->getCRC()) {
             assert(false);
         }
-        levels_[level]->flush(table);
+        levels_[level]->appendTable(table);
+    }
+
+    for (int i = 0; i < max_level_num; i++) {
+        levels_[i]->sortTables();
     }
 
     cur_file_id_.fetch_add(max_fid + 1);
@@ -66,7 +70,7 @@ RC LevelsManager::flush(std::shared_ptr<MemTable>& memtable) {
     memtable->close();
     table->open();
     
-    levels_[0]->flush(table);
+    levels_[0]->appendTable(table);
     manifest_file_->addTableMeta(0, table);
 
     return RC::SUCCESS;

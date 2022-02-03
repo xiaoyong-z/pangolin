@@ -16,7 +16,7 @@ RC LevelHandler::levelNGet(const Slice& key, Entry& entry, const std::shared_ptr
     return RC::SUCCESS;
 }
 
-void LevelHandler::flush(const std::shared_ptr<Table>& table) {
+void LevelHandler::appendTable(const std::shared_ptr<Table>& table) {
     tables_.push_back(table);
     level_size_.fetch_add(table->getSize());
 }
@@ -49,10 +49,56 @@ void LevelHandler::UnWLock() {
     rwLock_.unlock();
 }
 
-void LevelHandler::replaceTables(std::shared_ptr<Table>& old_tables, std::shared_ptr<Table>& new_tables) {
-    
+void LevelHandler::replaceTables(std::vector<std::shared_ptr<Table>>& old_tables, std::vector<std::shared_ptr<Table>>& new_tables) {
+    WLock();
+    std::vector<std::shared_ptr<Table>> temp_tables;
+    for (size_t i = 0; i < tables_.size(); i++) {
+        bool contain = false;
+        for (size_t j = 0; j < old_tables.size(); j++) {
+            if (old_tables[j] == tables_[i]) {
+                contain = true;
+                old_tables.erase(old_tables.begin() + j);
+                break;
+            }
+        }
+        if (contain == false) {
+            temp_tables.push_back(tables_[i]);
+        }
+    }
+    for (size_t i = 0; i < new_tables.size(); i++) {
+        temp_tables.push_back(new_tables[i]);
+    }
+    tables_.clear();
+    tables_.assign(temp_tables.begin(), temp_tables.end());
+    sortTables();
+    UnWLock();
 }
 
-void LevelHandler::deleteTables(std::shared_ptr<Table>& old_tables) {
+void LevelHandler::deleteTables(std::vector<std::shared_ptr<Table>>& old_tables) {
+    WLock();
+    std::vector<std::shared_ptr<Table>> temp_tables;
+    for (size_t i = 0; i < tables_.size(); i++) {
+        bool contain = false;
+        for (size_t j = 0; j < old_tables.size(); j++) {
+            if (old_tables[j] == tables_[i]) {
+                contain = true;
+                old_tables.erase(old_tables.begin() + j);
+                break;
+            }
+        }
+        if (contain == false) {
+            temp_tables.push_back(tables_[i]);
+        }
+    }
+    tables_.clear();
+    tables_.assign(temp_tables.begin(), temp_tables.end());
+    sortTables();
+    UnWLock();
+}
 
+// before calling this function, make sure acuqire the write lock first
+void LevelHandler::sortTables() {
+    std::sort(tables_.begin(), tables_.end(), [](const std::shared_ptr<Table>& a, const std::shared_ptr<Table>& b) {
+        return Util::compareKey(a->getMinKey(), b->getMinKey());
+    });
 }

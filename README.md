@@ -1,3 +1,3 @@
-# pangolin
+# pango
 
-pangolin is simple version of lsm tree (in c++), reference leveldb and badger
+`pango` is a embedding kv store, based on lsm tree, reference leveldb and badger.
