@@ -15,7 +15,7 @@ private:
 public:
     static Table* NewTable(const std::string& dir_name, uint32_t file_id, uint64_t sstable_max_sz);
 
-    RC flush(const std::shared_ptr<Builder>& builder);
+    RC flush(const std::shared_ptr<Builder>& builder, bool sync = true);
 
     static RC get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);
 
@@ -45,6 +45,8 @@ public:
     std::shared_ptr<SSTable>& getSSTable();
 
     const pb::IndexBlock& getIndexBlock();
+
+    RC sync();
 
 private:
     std::shared_ptr<SSTable> sstable_;

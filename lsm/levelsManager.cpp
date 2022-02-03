@@ -45,13 +45,16 @@ RC LevelsManager::get(const Slice& key, Entry& entry) {
     return levels_[0]->level0Get(key, entry, opt_);
 }
 
-RC LevelsManager::flush(std::shared_ptr<MemTable>& memtable) {
+std::shared_ptr<Table> LevelsManager::newTable() {
     uint32_t file_id = cur_file_id_.fetch_add(1);
     Table* table_raw = Table::NewTable(opt_->work_dir_, file_id, opt_->SSTable_max_sz);
-    if (table_raw == nullptr) {
-        return RC::LEVELS_FILE_NOT_OPEN;
-    }
-    std::shared_ptr<Table> table(table_raw);
+    assert (table_raw != nullptr);
+    std::shared_ptr<Table> table = std::shared_ptr<Table>(table_raw);
+    return table;
+}
+
+RC LevelsManager::flush(std::shared_ptr<MemTable>& memtable) {
+    std::shared_ptr<Table> table = newTable();
     std::shared_ptr<Builder> builder = std::make_shared<Builder>(opt_);
     std::shared_ptr<SkipListIterator> iterator = SkipListIterator::NewIterator(memtable->getSkipList());
     for (; iterator->Valid() ; iterator->Next()) {
@@ -84,4 +87,8 @@ std::shared_ptr<LevelHandler>& LevelsManager::getLevelHandler(int level_num) {
     assert(level_num <= opt_->getMaxLevelNum());
     return levels_[level_num];
 
+}
+
+std::shared_ptr<ManifestFile>& LevelsManager::getManifestFile() {
+    return manifest_file_;
 }

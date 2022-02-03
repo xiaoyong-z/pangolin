@@ -41,7 +41,6 @@ RC Block::insert(const Entry& entry) {
     uint32_t header = diff_key_index | (base_key_.size() - diff_key_index) << 16;
     encodeFix32(&content_, header);
     content_.append(entry.key_.data() + diff_key_index, base_key_.size() - diff_key_index);
-    encodeFix64(&content_, entry.expires_at_);
     content_.append(entry.value_.data(), entry.value_.size());
 
     offset_.push_back(size_);
@@ -49,10 +48,15 @@ RC Block::insert(const Entry& entry) {
     return RC::SUCCESS;
 }
 
-bool Block::checkFinish(const Entry& entry, int max_size) {
-    int offset_crc_size = (offset_.size() + 1) * 4 + 4 + 8 + 4;
-    int estimate_size = content_.size() + offset_crc_size + entry.key_.size() + entry.value_.size() + 8;
-    return estimate_size > max_size;
+bool Block::checkFinish(const Entry& entry, uint64_t max_size) {
+    uint64_t estimate_size = estimateSize() + 4 + entry.key_.size() + entry.value_.size();
+    return estimate_size >= max_size;
+}
+
+uint64_t Block::estimateSize() {
+    uint64_t offset_crc_size = offset_.size() * 4 + 4 + 8 + 4;
+    uint64_t estimate_size = content_.size() + offset_crc_size;
+    return estimate_size;
 }
 
 uint32_t Block::getKeyCount() {
@@ -82,7 +86,7 @@ std::vector<uint32_t>& Block::getOffsets() {
     return offset_;
 }
 
-uint32_t Block::getSize() {
+uint64_t Block::getSize() {
     return size_;
 }
 

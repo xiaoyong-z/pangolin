@@ -48,3 +48,11 @@ void LevelHandler::WLock() {
 void LevelHandler::UnWLock() {
     rwLock_.unlock();
 }
+
+void LevelHandler::replaceTables(std::shared_ptr<Table>& old_tables, std::shared_ptr<Table>& new_tables) {
+    
+}
+
+void LevelHandler::deleteTables(std::shared_ptr<Table>& old_tables) {
+
+}

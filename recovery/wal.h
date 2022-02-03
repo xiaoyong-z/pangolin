@@ -65,7 +65,6 @@ public:
         }
         uint32_t key_len = decodeFix32(buf);
         uint32_t value_len = decodeFix32(buf + 4);
-        entry->expires_at_ = decodeFix64(buf + 8);
         n = reader->read(key_len + value_len + CRC_SIZE_LEN, buf);
         if (n != key_len + value_len + CRC_SIZE_LEN) {
             return RC::WAL_END_OF_FILE_ERROR;

@@ -80,7 +80,7 @@ public:
 
     void update(SkipNode* node, Entry* elem) {
         std::lock_guard guard(update_mutex_);
-        node->value_ = allocateNewValue(elem->value_, elem->expires_at_);
+        node->value_ = allocateNewValue(elem->value_);
         node->value_len_ = elem->value_.size();
     }
     
@@ -92,7 +92,7 @@ public:
             node->key_ = allocateNewKey(elem->key_);
             node->key_len_ = elem->key_.size();
 
-            node->value_ = allocateNewValue(elem->value_, elem->expires_at_);
+            node->value_ = allocateNewValue(elem->value_);
             node->value_len_ = elem->value_.size();
         }
         return node;
@@ -110,16 +110,15 @@ public:
         return key; 
     }
 
-    char* allocateNewValue(const Slice& value, const uint64_t expire_at) {
+    char* allocateNewValue(const Slice& value) {
         size_t size = value.size() + sizeof(uint64_t);
         char* addr = arena_->allocateAlign(size);
         memmove(addr, value.data(), value.size());
-        encodeFix64(addr + value.size(), expire_at);
         return addr;
     }
 
     inline ValueStruct getValue(char* value_ptr, uint32_t value_len) const{
-        ValueStruct value(value_ptr, value_len, decodeFix64(value_ptr + value_len));
+        ValueStruct value(value_ptr, value_len);
         return value; 
     }
 

@@ -19,7 +19,9 @@ public:
 
     RC insert(const Entry& entry);
 
-    bool checkFinish(const Entry& entry, int max_size);
+    bool checkFinish(const Entry& entry, uint64_t max_size);
+
+    uint64_t estimateSize();
 
     uint32_t getKeyCount();
 
@@ -31,13 +33,13 @@ public:
 
     std::vector<uint32_t>& getOffsets();
 
-    uint32_t getSize();
+    uint64_t getSize();
 
 private:
     std::string content_;
     std::vector<uint32_t> offset_;
 
     std::string base_key_;
-    uint32_t size_;
+    uint64_t size_;
 };
 #endif

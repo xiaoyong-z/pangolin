@@ -3,6 +3,7 @@
 #include "keyrange.h"
 #include "table.h"
 #include "levelHandler.h"
+class LevelHandler;
 struct CompactionPlan {
     CompactionPlan(int compactor_id, const KeyRange& this_range, const KeyRange& next_range, 
         const std::vector<std::shared_ptr<Table>>& this_tables, const std::vector<std::shared_ptr<Table>>& next_tables, 

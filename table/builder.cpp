@@ -19,7 +19,7 @@ RC Builder::insert(const Entry& entry) {
     return RC::SUCCESS;
 }
 
-RC Builder::flush(SSTable* sstable, uint32_t& table_crc32) {
+RC Builder::flush(SSTable* sstable, uint32_t& table_crc32, bool sync) {
     if (cur_block_ != nullptr) {
         key_count_ += cur_block_->getKeyCount();
         cur_block_->finish();
@@ -28,6 +28,7 @@ RC Builder::flush(SSTable* sstable, uint32_t& table_crc32) {
     int bits_per_key = BloomFilter::calBitsPerKey(key_count_, opt_->bloom_false_positive_);
     std::string filter;
     BloomFilter::createFilter(key_hashs_, filter, bits_per_key);
+
     std::string indexBlockContent;
     uint64_t block_len = 0;
     indexBuilder(filter, indexBlockContent, block_len);
@@ -61,6 +62,10 @@ RC Builder::flush(SSTable* sstable, uint32_t& table_crc32) {
     std::string sstable_len;
     encodeFix64(&sstable_len, copy_offset);
     memmove(mmap_addr, sstable_len.data(), sstable_len.size());
+    if (sync) {
+        result = sstable->sync();
+        assert(result == RC::SUCCESS);
+    }
     return RC::SUCCESS;
 }
 
@@ -84,3 +89,21 @@ RC Builder::indexBuilder(const std::string& filter, std::string& content, uint64
     return RC::SUCCESS;
 }
 
+bool Builder::checkFinish() {
+    return estimateSize() >= opt_->SSTable_max_sz;
+}
+
+uint64_t Builder::estimateSize() {
+    uint64_t estimate_size = 0;
+    for (size_t i = 0; i < blocks_.size(); i++) {
+        // block size
+        estimate_size += blocks_[i]->getSize();
+        // block first key in index block + block offset + block len
+        estimate_size += (blocks_[i]->base_key_.size() + 8 + 4);
+    }
+    estimate_size += cur_block_->getSize();
+    estimate_size += BloomFilter::estimateSize(key_hashs_, key_hashs_.size(), opt_->bloom_false_positive_);
+    // max_version in index block + key count in index block + index block len + checksum + checksum len 
+    estimate_size += 4 + 4 + 4 + 4 + 4;
+    return estimate_size;
+}

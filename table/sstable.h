@@ -23,6 +23,10 @@ public:
     RC bytes(uint64_t offset, uint64_t size, char*& mmap_addr) {
         return file_->bytes(offset, size, mmap_addr);
     }
+
+    RC sync() {
+        return file_->sync();
+    }
     
     RC init(uint32_t& crc, uint64_t& size) {
         char* mmap_ptr;

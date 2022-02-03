@@ -5,7 +5,6 @@ project(metakv)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory("third_party/googletest")
-add_subdirectory("third_party/json")
 add_subdirectory("proto")
 
 set(JEMMLLOC_ENABLE ON)
@@ -22,6 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR}/lsm)
 include_directories(${CMAKE_SOURCE_DIR}/memtable)
 include_directories(${CMAKE_SOURCE_DIR}/compaction)
 include_directories(${CMAKE_SOURCE_DIR}/table)
+include_directories(${CMAKE_SOURCE_DIR}/recovery)
 include_directories(${CMAKE_SOURCE_DIR}/third_party/parallel-hashmap/parallel_hashmap)
 
 
@@ -43,7 +43,8 @@ FILE (GLOB ALL_SOURCES "*.cpp"
     "./lsm/*.cpp"
     "./table/*.cpp"
     "./compaction/*.cpp"
-    "./memtable/*.cpp" )
+    "./memtable/*.cpp"
+    "./recovery/*.cpp" )
 
 message("hheloo" ${ALL_SOURCES})
 
@@ -51,7 +52,7 @@ function(meta_test test_file)
     get_filename_component(test_target_name "${test_file}" NAME_WE)
     add_executable("${test_target_name}" "")
     target_sources("${test_target_name}" PRIVATE  "${test_file}" ${ALL_SOURCES})
-    target_link_libraries("${test_target_name}" gmock gtest nlohmann_json::nlohmann_json proto_gen_cxx)
+    target_link_libraries("${test_target_name}" gmock gtest proto_gen_cxx)
     add_test(NAME "${test_target_name}" COMMAND "${test_target_name}")
 endfunction(meta_test)
 

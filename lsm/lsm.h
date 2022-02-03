@@ -17,7 +17,10 @@ public:
 		std::vector<std::shared_ptr<MemTable>> immutables;
 		LSM* lsm = new LSM(options);
 
-		lsm->level_manager_.reset(newLevelManager(options));
+		ManifestFile* manifest_file = newManifest(options);
+		lsm->manifest_file_.reset(manifest_file);
+		lsm->level_manager_.reset(newLevelManager(options, manifest_file));
+
 
 		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_manager_);
 		if (result != RC::SUCCESS) {
@@ -79,11 +82,13 @@ public:
 		return memTable;
 	}
 
-	static LevelsManager* newLevelManager(const std::shared_ptr<Options>& options) {
+	static ManifestFile* newManifest(const std::shared_ptr<Options>& options) {
 		ManifestFile* manifest_file = ManifestFile::openManifestFile(options);
-		if (manifest_file == nullptr) {
-			return nullptr;
-		}
+		assert (manifest_file != nullptr);
+        return manifest_file;
+    }
+
+	static LevelsManager* newLevelManager(const std::shared_ptr<Options>& options, ManifestFile* manifest_file) {
         LevelsManager* level_manger = new LevelsManager(options, manifest_file);
         return level_manger;
     }
@@ -164,6 +169,7 @@ private:
 
 	std::shared_ptr<LevelsManager> level_manager_;
 	std::shared_ptr<Options> options_;
+	std::shared_ptr<ManifestFile> manifest_file_;
 
 	std::vector<std::unique_ptr<Thread>> threads_;
 };

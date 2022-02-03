@@ -19,8 +19,12 @@ Table* Table::NewTable(const std::string& dir_name, uint32_t file_id, uint64_t s
     return table;
 }
 
-RC Table::flush(const std::shared_ptr<Builder>& builder) {
-    return builder->flush(sstable_.get(), crc_);
+RC Table::flush(const std::shared_ptr<Builder>& builder, bool sync) {
+    return builder->flush(sstable_.get(), crc_, sync);
+}
+
+RC Table::sync() {
+    return sstable_->sync();
 }
 
 RC Table::get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {

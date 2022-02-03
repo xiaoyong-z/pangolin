@@ -11,6 +11,8 @@ public:
     void flush(const std::shared_ptr<Table>& table);
     const int getTableNum() const;
     const uint64_t getLevelSize() const;
+    void replaceTables(std::shared_ptr<Table>& old_tables, std::shared_ptr<Table>& new_tables);
+    void deleteTables(std::shared_ptr<Table>& old_tables);
 
     std::vector<std::shared_ptr<Table>>& getTables();
 

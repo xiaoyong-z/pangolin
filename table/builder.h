@@ -16,10 +16,13 @@ public:
 
     RC insert(const Entry& entry);
 
-    RC flush(SSTable* sstable, uint32_t& table_crc32);
+    RC flush(SSTable* sstable, uint32_t& table_crc32, bool sync = true);
 
     RC indexBuilder(const std::string& filter, std::string& content, uint64_t& block_len);
 
+    bool checkFinish();
+    
+    uint64_t estimateSize();
 
 private:
     std::shared_ptr<Options> opt_;

@@ -4,15 +4,9 @@
 [submodule "third_party/xxhashct"]
 	path = third_party/xxhashct
 	url = git://github.com/ekpyron/xxhashct.git
-[submodule "third_party/json"]
-	path = third_party/json
-	url = git://github.com/nlohmann/json.git
 [submodule "third_party/protobuf"]
 	path = third_party/protobuf
 	url = git://github.com/protocolbuffers/protobuf.git
-[submodule "third_party/parallel-hashmap"]
-	path = third_party/parallel-hashmap
-	url = git://github.com/greg7mdp/parallel-hashmap.git
 [submodule "third_party/jemalloc"]
 	path = third_party/jemalloc
 	url = git://github.com/jemalloc/jemalloc

@@ -2,7 +2,7 @@
 Compaction::Compaction(const std::shared_ptr<Options>& options, std::shared_ptr<CompactionState>& state, 
     std::shared_ptr<LevelsManager>& level_manager, int level_id): 
     level_manager_(level_manager), state_(state), this_level_(level_manager->getLevelHandler(level_id)), 
-    next_level_(level_manager->getLevelHandler(level_id + 1)), level_id_(level_id), 
+    next_level_(level_manager->getLevelHandler(level_id + 1)), opt_(options), level_id_(level_id), 
     cur_level_max_size_(options->getSSTableSize() * std::pow(options->getLevelSizeMultiplier(), level_id - 1)) {
         plan_.this_level_num_ = level_id;
         plan_.next_level_num_ = level_id + 1;
@@ -17,10 +17,10 @@ Compaction::~Compaction() {
 void Compaction::run() {
     init();
     while (true) {
-        // std::cout << "compactor: " << level_id_ << " working..." <<  std::endl;
-        // if (needCompaction()) {
-        //     doCompaction();
-        // }
+        std::cout << "compactor: " << level_id_ << " working..." <<  std::endl;
+        if (needCompaction()) {
+            doCompaction();
+        }
         sleep(CompactionConfig::compaction_duration);
     }
 }
@@ -29,7 +29,7 @@ void Compaction::init() {}
 
 bool Compaction::needCompaction() {
     if (level_id_ == 0) {
-        if (CompactionConfig::level0CompactionThreadshold) {
+        if (this_level_->getTableNum() > CompactionConfig::level0CompactionThreadshold) {
             return true;
         }
     } else {
@@ -142,5 +142,56 @@ bool Compaction::fillTablesLnToLnp1() {
 }
 
 void Compaction::performCompaction() {
+    std::vector<std::shared_ptr<Table>> two_level_tables(plan_.this_tables_);
+    std::copy(plan_.next_tables_.begin(), plan_.next_tables_.end(), std::back_inserter(two_level_tables));
+    if (two_level_tables.size() == 0) {
+        return;
+    }
+    std::unique_ptr<TableMergeIterator> iterator = std::make_unique<TableMergeIterator>(two_level_tables);
+    std::shared_ptr<Builder> builder;
+    std::vector<std::shared_ptr<Builder>> builders;
+    std::vector<std::shared_ptr<Table>> new_tables;
+    for (; iterator->Valid(); iterator->Next()) {
+        if (builder.get() == nullptr) {
+            builder = std::make_shared<Builder>(opt_);
+            builders.push_back(builder);
+        }
+        Entry entry;
+        iterator->getEntry(entry);
+        builder->insert(entry);
+        if (builder->checkFinish()) {
+            std::shared_ptr<Table> table = level_manager_->newTable();
+            table->flush(builder, false);
+            new_tables.emplace_back(table);
+            builder = nullptr;
+        }
+    }
+
+    for (size_t i = 0; i < new_tables.size(); i++) {
+        new_tables[i]->sync();
+        new_tables[i]->open();
+    }
+
+    pb::ManifestChangeSet set = ManifestFile::buildChangeSet(plan_, new_tables);
+
+    std::shared_ptr<ManifestFile>& manifest_file = level_manager_->getManifestFile();
+    pb::ManifestChangeSet change_set = manifest_file->buildChangeSet(plan_, new_tables);
+    RC result = manifest_file->applyChangeSet(change_set);
+    assert(result == RC::SUCCESS);
+    this_level_->getLevelSize();
+    // manifest_file_->addTableMeta(0, table);
+
     
+    // // = std::make_shared<Builder>(opt_);
+    // std::shared_ptr<SkipListIterator> iterator = SkipListIterator::NewIterator(memtable->getSkipList());
+    // for (; iterator->Valid() ; iterator->Next()) {
+    //     Entry entry;
+    //     iterator->getEntry(entry);
+    //     builder->insert(entry);
+    // }
+
+    // two_level_tables.assign(plan_.this_tables_.begin(), plan_.this_tables_.end());
+    // std::vector<std::shared_ptr<Table>& next_tables = plan_.next_tables_;
+    
+
 }

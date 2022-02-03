@@ -102,5 +102,12 @@ class BloomFilter {
         }
         return h;
     }
+
+    static uint64_t estimateSize(const std::vector<uint32_t>& keys, int numEntries, double fp) {
+        int bits_per_key = calBitsPerKey(numEntries, fp);
+        uint32_t nBits = std::max(keys.size() * bits_per_key, (size_t)64);
+        uint32_t nBytes = (nBits + 7) / 8;
+        return nBytes + 1;
+    }
 };
 #endif

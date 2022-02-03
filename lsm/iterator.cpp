@@ -126,6 +126,13 @@ void BlockIterator::getEntry(Entry& entry) {
     memcpy(buf, value.data(), value.size());
     buf[value.size()] = '\0';
     entry.value_.reset(buf, value.size());
+    
+    const std::string key = getKey(pos_);
+    buf = new char[key.size() + 1];
+    memcpy(buf, key.data(), key.size());
+    buf[key.size()] = '\0';
+    entry.key_.reset(buf, key.size());
+    
 }
 
 const std::string BlockIterator::getKey(uint32_t index) {
@@ -144,10 +151,10 @@ const std::string BlockIterator::getValue(uint32_t index) {
     uint16_t diff = header >> 16;
     if (index < offset_.size() - 1) {
         uint32_t next_offset = offset_[index + 1];
-        std::string value(content_.data() + cur_offset + 4 + diff + 8, next_offset - (cur_offset + 4 + diff + 8));
+        std::string value(content_.data() + cur_offset + 4 + diff, next_offset - (cur_offset + 4 + diff));
         return value;
     } else {
-        std::string value(content_.data() + cur_offset + 4 + diff + 8, keys_len_ - (cur_offset + 4 + diff + 8));
+        std::string value(content_.data() + cur_offset + 4 + diff, keys_len_ - (cur_offset + 4 + diff));
         return value;
     }
 }

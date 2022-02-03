@@ -5,6 +5,9 @@
 #include "compactionPlan.h"
 #include "compactionState.h"
 #include "keyrange.h"
+#include "table.h"
+#include "manifest.h"
+class Table;
 class Compaction : public Runnable {
 public:
     // id 1 thread handles level 1 compaction, id 2 thread handles level 2 compaction
@@ -26,6 +29,7 @@ private:
     std::shared_ptr<CompactionState> state_; 
     std::shared_ptr<LevelHandler> this_level_;
     std::shared_ptr<LevelHandler> next_level_;
+    std::shared_ptr<Options> opt_;
     int level_id_;
     uint64_t cur_level_max_size_;
     CompactionPlan plan_;
