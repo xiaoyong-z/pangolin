@@ -46,7 +46,15 @@ LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, std::share
 }
 
 RC LevelsManager::get(const Slice& key, Entry& entry) {
-    return levels_[0]->level0Get(key, entry, opt_);
+    if (levels_[0]->level0Get(key, entry, opt_) == RC::SUCCESS) {
+        return RC::SUCCESS;
+    }
+    for (int i = 0; i < opt_->getMaxLevelNum(); i++) {
+        if (levels_[i]->levelNGet(key, entry, opt_) == RC::SUCCESS) {
+            return RC::SUCCESS;
+        }
+    }
+    return RC::LEVELS_KEY_NOT_FOUND_IN_ALL_LEVELS;
 }
 
 std::shared_ptr<Table> LevelsManager::newTable() {
@@ -74,6 +82,13 @@ RC LevelsManager::flush(std::shared_ptr<MemTable>& memtable) {
     manifest_file_->addTableMeta(0, table);
 
     return RC::SUCCESS;
+}
+
+void LevelsManager::scan() {
+    for (size_t i = 0; i < levels_.size(); i++) {
+        std::cout << "level i : " << i << "." << std::endl;
+        levels_[i]->scan();
+    }
 }
 
 

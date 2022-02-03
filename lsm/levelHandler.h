@@ -15,6 +15,7 @@ public:
     void deleteTables(std::vector<std::shared_ptr<Table>>& old_tables);
     std::vector<std::shared_ptr<Table>>& getTables();
     void sortTables();
+    void scan();
 
     void RLock();
     void UnRLock();

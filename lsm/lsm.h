@@ -29,7 +29,7 @@ public:
 		if (result != RC::SUCCESS) {
 			return nullptr;
 		}
-		result = lsm->startCompaction();
+		// result = lsm->startCompaction();
 		if (result != RC::SUCCESS) {
 			return nullptr;
 		}
@@ -64,7 +64,7 @@ public:
     }
 
 	static std::shared_ptr<MemTable> newMemTable(const std::shared_ptr<Options>& options, std::shared_ptr<LevelsManager>& level_manager) {
-        uint32_t fid = level_manager->cur_file_id_.load();
+        uint32_t fid = level_manager->cur_file_id_.fetch_add(1);
 
 		std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>(fid, options->work_dir_, O_CREAT | O_RDWR, options->SSTable_max_sz);
 		file_opt->file_name_ = Util::filePathJoin(options->work_dir_, fid, WALConfig::filePostfix);
@@ -139,6 +139,18 @@ public:
 
 		rc = level_manager_->get(key, entry);
 		return rc;
+	}
+
+	void scan() {
+		std::cout << "memtable : " << std::endl;
+		memtable_->scan();
+		std::cout << "immutable memtables : " << std::endl;
+		for (size_t i = 0; i < immutables_.size(); i++) {
+			std::cout << "immutable table i : " << i << ". " << std::endl;
+			immutables_[i]->scan();
+		}
+		std::cout << "levels : " << std::endl;
+		level_manager_->scan();
 	}
 
 	RC flush() {

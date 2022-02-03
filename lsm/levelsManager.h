@@ -24,6 +24,7 @@ public:
     std::vector<std::shared_ptr<Table>>& getTables(int level_num);
     std::shared_ptr<LevelHandler>& getLevelHandler(int level_num);
     std::shared_ptr<ManifestFile>& getManifestFile();
+    void scan();
 
 private:
     std::atomic<uint32_t> cur_file_id_;

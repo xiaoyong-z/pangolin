@@ -16,6 +16,8 @@ public:
     void del(const std::string& key);
 	void set(const std::string& key, const std::string& value);
 	std::string get(const std::string& key);
+	// Used for debug only
+	void scan();
 private:
     std::shared_ptr<Options> opt_;
 	std::shared_ptr<LSM> lsm_;

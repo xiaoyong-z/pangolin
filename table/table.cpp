@@ -48,14 +48,6 @@ RC Table::get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, con
     return RC::SUCCESS;
 }
 
-void Table::scan(std::shared_ptr<Table>& table) {
-    std::unique_ptr<TableIterator> iterator = std::make_unique<TableIterator>(table);
-    while (iterator->Valid()) {
-        std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
-        iterator->Next();
-    }
-}
-
 RC Table::open() {
     sstable_->init(crc_, size_); 
     return RC::SUCCESS;

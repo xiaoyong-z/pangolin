@@ -34,3 +34,8 @@ std::string DB::get(const std::string& key) {
     assert(rc == RC::SUCCESS);
     return result.value_.ToString();
 }
+
+// Used for debug only
+void DB::scan() {
+    lsm_->scan();
+}

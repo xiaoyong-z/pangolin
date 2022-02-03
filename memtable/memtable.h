@@ -36,6 +36,14 @@ public:
         return RC::SUCCESS;
     }
 
+    void scan() {
+        std::unique_ptr<SkipListIterator> iterator = std::make_unique<SkipListIterator>(skipList_);
+        while (iterator->Valid()) {
+            std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
+            iterator->Next();
+        }
+    }
+
     static void replayFunction(SkipList* skip_list, Entry* entry) {
         RC rc = skip_list->insert(entry);
         assert(rc == RC::SUCCESS);
@@ -56,7 +64,7 @@ public:
     std::shared_ptr<WALFile>& getWAL() {
         return wal_;
     }
-
+private:
     std::shared_ptr<WALFile> wal_;
     std::shared_ptr<SkipList> skipList_;
 };

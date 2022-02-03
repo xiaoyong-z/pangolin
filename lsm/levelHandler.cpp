@@ -3,8 +3,6 @@
 
 RC LevelHandler::level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
     for (size_t i = 0; i < tables_.size(); i++) {
-        std::cout << "scan this table: " << std::endl; 
-        Table::scan(tables_[i]);
         if (Table::get(tables_[i], key, entry, opt) == RC::SUCCESS) {
             return RC::SUCCESS;
         }
@@ -94,6 +92,17 @@ void LevelHandler::deleteTables(std::vector<std::shared_ptr<Table>>& old_tables)
     tables_.assign(temp_tables.begin(), temp_tables.end());
     sortTables();
     UnWLock();
+}
+
+void LevelHandler::scan() {
+    for (size_t i = 0; i < tables_.size(); i++) {
+        std::cout << "scan table i: " << i << ". " << std::endl; 
+        std::unique_ptr<TableIterator> iterator = std::make_unique<TableIterator>(tables_[i]);
+        while (iterator->Valid()) {
+            std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
+            iterator->Next();
+        }
+    }
 }
 
 // before calling this function, make sure acuqire the write lock first
