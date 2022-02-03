@@ -12,6 +12,7 @@
 class DB {
 public:
 	DB(std::shared_ptr<Options> options);
+	~DB();
     void del(const std::string& key);
 	void set(const std::string& key, const std::string& value);
 	std::string get(const std::string& key);

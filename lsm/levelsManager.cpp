@@ -1,6 +1,6 @@
 #include "levelsManager.h"
 
-LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, ManifestFile* manifest_file): 
+LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, std::shared_ptr<ManifestFile> manifest_file): 
     cur_file_id_(0), opt_(options), manifest_file_(manifest_file) {
     std::set<uint32_t> sstable_file_id;
     for (const auto & entry : std::filesystem::directory_iterator(options->work_dir_)) {

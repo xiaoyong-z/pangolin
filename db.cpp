@@ -6,6 +6,11 @@ DB::DB(std::shared_ptr<Options> options): opt_(options) {
     lsm_.reset(lsm);
 }
 
+DB::~DB() {
+    RC rc = lsm_->flush();
+    assert(rc == RC::SUCCESS);
+}
+
 void DB::del(const std::string& key) {
     Slice skey(key);
     Slice svalue("");

@@ -8,6 +8,7 @@ void ManifestFile::setFile(int file) {
 }
 
 ManifestFile::~ManifestFile() {
+    std::cout << "manifest freed" << std::endl;
     assert (close(file_) == 0);
 }
 

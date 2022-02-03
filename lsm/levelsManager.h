@@ -15,7 +15,7 @@ class LevelsManager: public std::enable_shared_from_this<LevelsManager> {
     friend class LSM;
 public:
 
-    LevelsManager(const std::shared_ptr<Options>& options, ManifestFile* manifest_file);
+    LevelsManager(const std::shared_ptr<Options>& options, std::shared_ptr<ManifestFile> manifest_file);
     RC get(const Slice& key, Entry& entry);
     RC flush(std::shared_ptr<MemTable>& memtable); 
     std::shared_ptr<Table> newTable();

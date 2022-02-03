@@ -10,8 +10,11 @@
 
 class LSM {
 	LSM(std::shared_ptr<Options> options):options_(options) {}
-
 public:
+	~LSM() {
+		stopCompaction();
+	}
+
 	static LSM* newLSM(std::shared_ptr<Options> options) {
 		std::shared_ptr<MemTable> memtable;
 		std::vector<std::shared_ptr<MemTable>> immutables;
@@ -19,7 +22,7 @@ public:
 
 		ManifestFile* manifest_file = newManifest(options);
 		lsm->manifest_file_.reset(manifest_file);
-		lsm->level_manager_.reset(newLevelManager(options, manifest_file));
+		lsm->level_manager_.reset(newLevelManager(options, lsm->manifest_file_));
 
 
 		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_manager_);
@@ -88,7 +91,7 @@ public:
         return manifest_file;
     }
 
-	static LevelsManager* newLevelManager(const std::shared_ptr<Options>& options, ManifestFile* manifest_file) {
+	static LevelsManager* newLevelManager(const std::shared_ptr<Options>& options, std::shared_ptr<ManifestFile> manifest_file) {
         LevelsManager* level_manger = new LevelsManager(options, manifest_file);
         return level_manger;
     }
@@ -144,6 +147,13 @@ public:
             return result;
         }
 		memtable_ = newMemTable(options_, level_manager_);
+		return RC::SUCCESS;
+	}
+
+	RC stopCompaction() {
+		for (size_t i = 0; i < threads_.size(); i++) {
+			threads_[i]->stop();
+		}
 		return RC::SUCCESS;
 	}
 
