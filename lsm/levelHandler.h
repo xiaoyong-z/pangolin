@@ -9,8 +9,8 @@ public:
     RC level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);
     RC levelNGet(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);
     void appendTable(const std::shared_ptr<Table>& table);
-    const int getTableNum() const;
-    const uint64_t getLevelSize() const;
+    const int getTableNum();
+    const uint64_t getLevelSize();
     void replaceTables(std::vector<std::shared_ptr<Table>>& old_tables, std::vector<std::shared_ptr<Table>>& new_tables);
     void deleteTables(std::vector<std::shared_ptr<Table>>& old_tables);
     std::vector<std::shared_ptr<Table>>& getTables();

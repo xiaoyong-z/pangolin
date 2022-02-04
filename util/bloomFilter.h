@@ -42,14 +42,14 @@ class BloomFilter {
         return RC::SUCCESS;
     }
 
-    static bool contains(const char* key, const std::string& filter) {
+    static bool contains(const char* key, const std::string& filter, int size = -1) {
         if (filter.size() < 2) {
             return false;
         }
         uint32_t nBytes = filter.size() - 1;
         char k = filter[nBytes];
         uint32_t nBits = nBytes * 8;
-        uint32_t h = hash(key);
+        uint32_t h = hash(key, size);
         uint32_t delta = h >> 17 | h << 15;
         for (int j = 0; j < k; j++) {
             uint32_t bitPos = h % (uint32_t)(nBits);
@@ -67,9 +67,14 @@ class BloomFilter {
         return (int)std::ceil((double)size / (double)numEntries);
     }
 
-    static uint32_t hash(const char* key) {
+
+    static uint32_t hash(const char* key, int size = -1) {
         //return xxh32::hash(key, strlen(key), seed);
-        return levelDBHash(key, strlen(key), seed);
+        if (size == -1) {
+            return levelDBHash(key, strlen(key), seed);
+        } else {
+            return levelDBHash(key, size, seed);
+        }
     }
 
     static uint32_t levelDBHash(const char* data, size_t n, uint32_t seed) {

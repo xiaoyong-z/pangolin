@@ -33,15 +33,15 @@ int Block::diffKey(const Slice& key) {
 RC Block::insert(const Entry& entry) {
     int diff_key_index;
     if (offset_.size() == 0) {
-        base_key_ = std::move(entry.key_.ToString());
+        base_key_ = std::move(entry.getKey().ToString());
         diff_key_index = base_key_.size();
     } else {
-        diff_key_index = diffKey(entry.key_);
+        diff_key_index = diffKey(entry.getKey());
     }
-    uint32_t header = diff_key_index | (entry.key_.size() - diff_key_index) << 16;
+    uint32_t header = diff_key_index | (entry.getKey().size() - diff_key_index) << 16;
     encodeFix32(&content_, header);
-    content_.append(entry.key_.data() + diff_key_index, entry.key_.size() - diff_key_index);
-    content_.append(entry.value_.data(), entry.value_.size());
+    content_.append(entry.getKey().data() + diff_key_index, entry.getKey().size() - diff_key_index);
+    content_.append(entry.getValue().data(), entry.getValue().size());
 
     offset_.push_back(size_);
     size_ = content_.size();
@@ -49,7 +49,7 @@ RC Block::insert(const Entry& entry) {
 }
 
 bool Block::checkFinish(const Entry& entry, uint64_t max_size) {
-    uint64_t estimate_size = estimateSize() + 4 + entry.key_.size() + entry.value_.size();
+    uint64_t estimate_size = estimateSize() + 4 + entry.getKey().size() + entry.getValue().size();
     return estimate_size >= max_size;
 }
 

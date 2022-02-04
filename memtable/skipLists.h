@@ -59,10 +59,6 @@ private:
 
 double calculateKeyScore(const Slice& key);
 
-inline int compareKey(const Slice& key1, const Slice& key2) {
-    return key1.compare(key2);
-}
-
 class SkipList {
 public:
     SkipList() {
@@ -80,8 +76,8 @@ public:
 
     void update(SkipNode* node, Entry* elem) {
         std::lock_guard guard(update_mutex_);
-        node->value_ = allocateNewValue(elem->value_);
-        node->value_len_ = elem->value_.size();
+        node->value_ = allocateNewValue(elem->getValue());
+        node->value_len_ = elem->getValue().size();
     }
     
     SkipNode* allocateNewNode(const double score, const int height, Entry* elem) {
@@ -89,11 +85,11 @@ public:
         char* addr = arena_->allocateAlign(size);
         SkipNode* node = new(addr) SkipNode(score, height);
         if (elem != nullptr) {
-            node->key_ = allocateNewKey(elem->key_);
-            node->key_len_ = elem->key_.size();
+            node->key_ = allocateNewKey(elem->getKey());
+            node->key_len_ = elem->getKey().size();
 
-            node->value_ = allocateNewValue(elem->value_);
-            node->value_len_ = elem->value_.size();
+            node->value_ = allocateNewValue(elem->getValue());
+            node->value_len_ = elem->getValue().size();
         }
         return node;
     }
@@ -128,7 +124,6 @@ public:
         return max_height_.load(std::memory_order_relaxed);
     }
 
-
     int randomHeight() {
         int level = 0;
         while (random() % 4 == 0)
@@ -142,14 +137,20 @@ public:
     }
 
     inline int Compare(SkipNode* node, const Slice& keyb, double score) const {
-        if (node->score_ > score) {
-            return 1;
-        } else if (node->score_ < score) {
-            return -1;
-        } else {
-            const Slice keya = getKey(node->key_, node->key_len_);
-            return compareKey(keya, keyb);
-        }
+        // if (node->score_ > score) {
+        //     return 1;
+        // } else if (node->score_ < score) {
+        //     return -1;
+        // } else {
+        const Slice keya = getKey(node->key_, node->key_len_);
+        return Util::compareBytes(keya, keyb);
+        // }
+    }
+
+    inline int KeyCompare(SkipNode* node, const Slice& keyb, double score) const {
+        const Slice keya = getKey(node->key_, node->key_len_);
+        int cmp = Util::compareKey(keya, keyb);
+        return cmp;
     }
 
     RC contains(const Slice& key, Entry& result) {
@@ -163,7 +164,7 @@ public:
                 cur_node = next_node;
             } else {
                 if (cur_height == 0) {
-                    if (next_node != nullptr && Compare(next_node, key, key_score) == 0) {
+                    if (next_node != nullptr && KeyCompare(next_node, key, key_score) == 0) {
                         const Slice key_find = getKey(next_node->key_, next_node->key_len_);
                         const ValueStruct value_find = getValue(next_node->value_, next_node->value_len_);
                         result.reset(key_find, value_find);
@@ -181,19 +182,19 @@ public:
 
     RC insert(Entry* elem) {
         SkipNode* prev_[SKIPLIST_MAX_HEIGHT];
-        double key_score = CalculateScore(elem->key_);
+        double key_score = CalculateScore(elem->getKey());
         // std::cout << "score:" << key_score << std::endl;
         SkipNode* cur_node = header_;
 
         int cur_height = getMaxHeight();
         while (true) {
             SkipNode* next_node = cur_node->next(cur_height);
-            if (next_node != nullptr && Compare(next_node, elem->key_, key_score) < 0) {
+            if (next_node != nullptr && Compare(next_node, elem->getKey(), key_score) < 0) {
                 cur_node = next_node;
             } else {
                 prev_[cur_height] = cur_node;
                 if (cur_height == 0) {
-                    if (next_node != nullptr && Compare(next_node, elem->key_, key_score) == 0) {
+                    if (next_node != nullptr && Compare(next_node, elem->getKey(), key_score) == 0) {
                         update(next_node, elem);
                         return RC::SUCCESS;
                     }

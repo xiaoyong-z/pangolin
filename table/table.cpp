@@ -29,16 +29,16 @@ RC Table::sync() {
 
 RC Table::get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
     std::shared_ptr<SSTable>& sstable = table->getSSTable();
-    if (key.compare(sstable->getMinKey()) < 0 || key.compare(sstable->getMaxKey()) > 0) {
+    std::string key2 = key.ToString();
+    if (Util::compareKey(key2, sstable->getMinKey()) < 0 || Util::compareKey(key2, sstable->getMaxKey()) > 0) {
         return RC::TABLE_EXCEED_MINMAX;
     }
 
-    if (BloomFilter::contains(key.data(), *sstable->getFilter()) == false) {
+    if (BloomFilter::contains(key.data(), *sstable->getFilter(), key.size() - META_SIZE) == false) {
         return RC::TABLE_BLOOM_FILTER_NOT_CONTAIN;
     }
 
     std::unique_ptr<TableIterator> iterator = std::make_unique<TableIterator>(table);
-    std::string key2 = key.ToString();
     if (iterator->Seek(key2) == false) {
         return RC::TABLE_KEY_NOT_FOUND_IN_BLOCK;   
     }

@@ -16,9 +16,9 @@ struct ValueStruct {
 struct Entry {
     ~Entry(){};
     
-    Entry(){};
+    Entry(): type_(kTypeValue) {};
     
-    Entry(Slice& key, Slice& value): key_(key), value_(value) {};
+    Entry(Slice& key, Slice& value): key_(key), value_(value), type_(kTypeValue) {};
 
     void reset(const Slice& key, const ValueStruct& value){
         key_ = key;
@@ -30,15 +30,54 @@ struct Entry {
         value_ = value;
     }
 
-        uint32_t estimateWalEntrySize() {
-        return key_.size() + value_.size() + 8 + 8 + CRC_SIZE_LEN;
+    uint32_t estimateWalEntrySize() {
+        return key_.size() + value_.size() + CRC_SIZE_LEN + KEY_VALUE_LEN;
     }
 
     void setKey(const Slice& key) {
         key_ = key;
     }
 
-    Slice key_;
-    Slice value_;
+    void setVersionNumAndType(uint32_t version_num, ValueType type = kTypeValue) {
+        version_num_ = version_num;
+        type_ = type;
+        char* addr = new char[key_.size() + META_SIZE];
+        memcpy(addr, key_.data(), key_.size());
+        Util::encodeVersionNumType(addr + key_.size(), version_num, type);
+        key_.reset(addr, key_.size() + META_SIZE);
+    }
+
+    void resetKey(char* addr, size_t size) {
+        key_.reset(addr, size);
+        Util::decodeVersionNumType(addr + size - META_SIZE, version_num_, type_);
+    }
+
+    void resetValue(const char* addr, size_t size) {
+        value_.reset(addr, size);
+    }
+
+    inline Slice& getKey() const {
+        return key_;
+    }
+
+    inline Slice& getValue() const {
+        return value_;
+    }
+
+    inline uint32_t getVersionNum() const {
+        return version_num_;
+    }
+
+    inline ValueType getType() const {
+        return type_;
+    }
+
+private:
+    mutable Slice key_;
+    mutable Slice value_;
+
+    // derived from key_
+    uint32_t version_num_;
+    ValueType type_;
 };
 #endif

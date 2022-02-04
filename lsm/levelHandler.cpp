@@ -15,16 +15,24 @@ RC LevelHandler::levelNGet(const Slice& key, Entry& entry, const std::shared_ptr
 }
 
 void LevelHandler::appendTable(const std::shared_ptr<Table>& table) {
+    WLock();
     tables_.push_back(table);
     level_size_.fetch_add(table->getSize());
+    UnWLock();
 }
 
-const int LevelHandler::getTableNum() const {
-    return tables_.size();
+const int LevelHandler::getTableNum() {
+    RLock();
+    int result = tables_.size();
+    UnRLock();
+    return result;
 }
 
-const uint64_t LevelHandler::getLevelSize() const {
-    return level_size_.load(); 
+const uint64_t LevelHandler::getLevelSize() {
+    RLock();
+    uint64_t level_size = level_size_.load();
+    UnRLock();
+    return level_size; 
 }
 
 std::vector<std::shared_ptr<Table>>& LevelHandler::getTables() {
@@ -95,17 +103,20 @@ void LevelHandler::deleteTables(std::vector<std::shared_ptr<Table>>& old_tables)
 }
 
 void LevelHandler::scan() {
+    RLock();
     for (size_t i = 0; i < tables_.size(); i++) {
         std::cout << "scan table i: " << i << ". " << std::endl; 
         std::unique_ptr<TableIterator> iterator = std::make_unique<TableIterator>(tables_[i]);
         while (iterator->Valid()) {
-            if (BloomFilter::contains(iterator->getKey().data(), *tables_[i]->getSSTable()->getFilter()) == false) {
+            if (BloomFilter::contains(iterator->getKey().data(), *tables_[i]->getSSTable()->getFilter(), iterator->getKey().size() - META_SIZE) == false) {
                 std::cout << "warning: " << iterator->getKey().data() << " not in the bloom filter" << std::endl;
             }
             std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
             iterator->Next();
         }
+        std::cout << "scan table i " << i << " finish . " << std::endl; 
     }
+    UnRLock();
 }
 
 // before calling this function, make sure acuqire the write lock first

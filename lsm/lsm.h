@@ -9,7 +9,7 @@
 #include "compactionState.h"
 
 class LSM {
-	LSM(std::shared_ptr<Options> options):options_(options) {}
+	LSM(std::shared_ptr<Options> options):last_version_(0), options_(options) {}
 public:
 	~LSM() {
 		stopCompaction();
@@ -96,19 +96,29 @@ public:
         return level_manger;
     }
 
-	RC set(Entry* entry) {
-		if (memtable_->wal_->size() + entry->estimateWalEntrySize() > options_->mem_table_size_) {
+	RC set(const std::string& key, const std::string& value, bool del = false) {
+
+		Slice skey(key);
+    	Slice svalue(value);
+    	Entry entry(skey, svalue);
+
+		if (memtable_->wal_->size() + entry.estimateWalEntrySize() > options_->mem_table_size_) {
 			immutables_.push_back(memtable_);
 			memtable_ = newMemTable(options_, level_manager_);
 		}
 
-		RC result = memtable_->set(entry);
+		if (del) {
+			entry.setVersionNumAndType(last_version_.fetch_add(1), kTypeDeletion);
+		} else {
+			entry.setVersionNumAndType(last_version_.fetch_add(1), kTypeValue);
+		}
+
+		RC result = memtable_->set(&entry);
 		if (result != RC::SUCCESS) {
 			return result;
 		}
 
 		for (size_t i = 0; i < immutables_.size(); i++) {
-			// scan();
 			level_manager_->flush(immutables_[i]);
 		}
 		immutables_.clear();
@@ -125,20 +135,34 @@ public:
 		return result;
 	}
 	
-	RC get(const Slice& key, Entry& entry) {
-		RC rc = memtable_->get(key, entry);
+	RC get(const std::string& key, std::string& value) {
+		std::string internalKey = key;
+		uint32_t last_version = last_version_.load();
+		Util::encodeVersionNum(&internalKey, last_version);
+		Slice skey(internalKey);
+
+		Entry entry;
+    	// Slice svalue(value);
+    	// Entry entry(skey, svalue);
+		// entry.setVersionNumAndType(last_version_.load());
+		RC rc = memtable_->get(skey, entry);
 		if (rc == RC::SUCCESS) {
+			value = entry.getValue().ToString();
 			return rc;
 		}
 
 		for (size_t i = 0; i < immutables_.size(); i++) {
-			rc = immutables_[i]->get(key, entry);
+			rc = immutables_[i]->get(skey, entry);
 			if (rc == RC::SUCCESS) {
+				value = entry.getValue().ToString();
 				return rc;
 			}
 		}
 
-		rc = level_manager_->get(key, entry);
+		rc = level_manager_->get(skey, entry);
+		if (rc == RC::SUCCESS) {
+			value = entry.getValue().ToString();
+		}
 		return rc;
 	}
 
@@ -158,14 +182,16 @@ public:
 	}
 
 	RC flush() {
-		// std::cout << "called flush " << std::endl;
+		std::cout << "called flush " << std::endl;
 		// scan();
 
-		RC result = level_manager_->flush(memtable_);
-        if (result != RC::SUCCESS) {
-            return result;
-        }
-		memtable_ = newMemTable(options_, level_manager_);
+		if (memtable_->getEntryCount() > 0) { 
+			RC result = level_manager_->flush(memtable_);
+			if (result != RC::SUCCESS) {
+				return result;
+			}
+			// memtable_ = newMemTable(options_, level_manager_);
+		}
 		return RC::SUCCESS;
 	}
 
@@ -193,13 +219,13 @@ public:
 
 
 private:
+	std::atomic<uint32_t> last_version_; 
+
 	std::shared_ptr<MemTable> memtable_;
 	std::vector<std::shared_ptr<MemTable>> immutables_;
-
 	std::shared_ptr<LevelsManager> level_manager_;
 	std::shared_ptr<Options> options_;
 	std::shared_ptr<ManifestFile> manifest_file_;
-
 	std::vector<std::unique_ptr<Thread>> threads_;
 };
 #endif

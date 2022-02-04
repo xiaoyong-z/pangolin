@@ -47,16 +47,16 @@ TEST(MemTableTest, BasicTest) {
 
     ASSERT_EQ(memtable.set(&entry1), RC::SUCCESS);
     ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value1);
+    ASSERT_EQ(result.getValue(), value1);
 
 
     ASSERT_EQ(memtable.set(&entry2), RC::SUCCESS);
     ASSERT_EQ(memtable.get(skey2, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value2);
+    ASSERT_EQ(result.getValue(), value2);
 
     ASSERT_EQ(memtable.set(&entry3), RC::SUCCESS);
     ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value3);
+    ASSERT_EQ(result.getValue(), value3);
 
     Arena::Instance()->free();
 }

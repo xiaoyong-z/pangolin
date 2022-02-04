@@ -10,7 +10,7 @@ message IndexBlock {
 }
 
 message BlockOffset {
-    string base_key = 1;
+    bytes base_key = 1;
     uint64 offset = 2;
     uint32 len = 3; 
 } 

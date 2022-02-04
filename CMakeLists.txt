@@ -57,11 +57,11 @@ function(meta_test test_file)
 endfunction(meta_test)
 
 meta_test("test/skipListsTest.cpp")
-meta_test("test/lsm_test.cpp")
+# meta_test("test/lsm_test.cpp")
 meta_test("test/bloomFilterTest.cpp")
 meta_test("test/memtable_test.cpp")
-meta_test("test/recovery_test.cpp")
-meta_test("test/thread_test.cpp")
+# meta_test("test/recovery_test.cpp")
+# meta_test("test/thread_test.cpp")
 meta_test("test/db_test.cpp")
 
 execute_process (

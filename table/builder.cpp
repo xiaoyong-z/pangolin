@@ -14,7 +14,7 @@ RC Builder::insert(const Entry& entry) {
         cur_block_ = std::make_shared<Block>();
     }
     // cal max version
-    key_hashs_.push_back(BloomFilter::hash(entry.key_.data()));
+    key_hashs_.push_back(BloomFilter::hash(entry.getKey().data(), entry.getKey().size() - META_SIZE));
     cur_block_->insert(entry);
     return RC::SUCCESS;
 }

@@ -72,15 +72,15 @@ TEST(SkipTest, BasicCRUD) {
 
     skipList.insert(&entry1);
     ASSERT_EQ(skipList.contains(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value1);
+    ASSERT_EQ(result.getValue(), value1);
 
     skipList.insert(&entry2);
     ASSERT_EQ(skipList.contains(skey2, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value2);
+    ASSERT_EQ(result.getValue(), value2);
 
     skipList.insert(&entry3);
     ASSERT_EQ(skipList.contains(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.value_, value3);
+    ASSERT_EQ(result.getValue(), value3);
 
     Arena::Instance()->free();
 }
@@ -108,7 +108,7 @@ TEST(SkipTest, BenchmarkCRUD) {
         skipList.insert(&entry);
         // RC rc = skipList.contains(key, result);
         ASSERT_EQ(skipList.contains(key, result), RC::SUCCESS);
-        ASSERT_EQ(result.value_.compare(value), 0);
+        ASSERT_EQ(result.getValue().compare(value), 0);
         delete[] key_ptr;
         delete[] value_ptr;
     }
@@ -182,7 +182,7 @@ void SkipListContain(SkipList &skipList, int i, int maxLen){
         Slice value(value_ptr, str.size());
         Entry result;
         ASSERT_EQ (skipList.contains(key, result), RC::SUCCESS);
-        ASSERT_EQ (result.value_.compare(value), 0);
+        ASSERT_EQ (result.getValue().compare(value), 0);
         delete[] key_ptr;
         delete[] value_ptr;
     }

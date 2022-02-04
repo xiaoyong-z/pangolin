@@ -15,6 +15,14 @@ inline void encodeFix32(std::string *dst, uint32_t value) {
     dst->append(buf, sizeof(buf));
 }
 
+inline void encodeFix32(char *dst, uint32_t value) {
+    uint8_t *buffer = reinterpret_cast<uint8_t*>(dst);
+    buffer[0] = static_cast<uint8_t>(value);
+    buffer[1] = static_cast<uint8_t>(value >> 8);
+    buffer[2] = static_cast<uint8_t>(value >> 16);
+    buffer[3] = static_cast<uint8_t>(value >> 24);
+}
+
 inline void encodeFix64(std::string *dst, uint64_t value) {
     char buf[sizeof(value)];
 

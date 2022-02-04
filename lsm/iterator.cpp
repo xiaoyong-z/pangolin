@@ -125,13 +125,13 @@ void BlockIterator::getEntry(Entry& entry) {
     char* buf = new char[value.size() + 1];
     memcpy(buf, value.data(), value.size());
     buf[value.size()] = '\0';
-    entry.value_.reset(buf, value.size());
+    entry.resetValue(buf, value.size());
     
     const std::string key = getKey(pos_);
     buf = new char[key.size() + 1];
     memcpy(buf, key.data(), key.size());
     buf[key.size()] = '\0';
-    entry.key_.reset(buf, key.size());
+    entry.resetKey(buf, key.size());
     
 }
 

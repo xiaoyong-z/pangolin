@@ -12,27 +12,20 @@ DB::~DB() {
 }
 
 void DB::del(const std::string& key) {
-    Slice skey(key);
-    Slice svalue("");
-    Entry entry(skey, svalue);
-    RC rc = lsm_->set(&entry);
+    RC rc = lsm_->set(key, "", true);
     assert(rc == RC::SUCCESS);
 }
 
 void DB::set(const std::string& key, const std::string& value) {
-    Slice skey(key);
-    Slice svalue(value);
-    Entry entry(skey, svalue);
-    RC rc = lsm_->set(&entry);
+    RC rc = lsm_->set(key, value);
     assert(rc == RC::SUCCESS);
 }
 
 std::string DB::get(const std::string& key) {
-    Slice skey(key);
-    Entry result;
-    RC rc = lsm_->get(skey, result);
-    assert(rc == RC::SUCCESS);
-    return result.value_.ToString();
+    std::string value;
+    lsm_->get(key, value);
+    // assert(rc == RC::SUCCESS);
+    return value;
 }
 
 // Used for debug only

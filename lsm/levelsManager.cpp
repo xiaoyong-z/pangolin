@@ -90,6 +90,7 @@ void LevelsManager::scan() {
     for (size_t i = 0; i < levels_.size(); i++) {
         std::cout << "level i : " << i << "." << std::endl;
         levels_[i]->scan();
+        std::cout << "leave" << std::endl;
     }
 }
 

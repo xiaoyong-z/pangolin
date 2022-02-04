@@ -58,9 +58,9 @@ public:
 
     RC decodeEntry(const std::shared_ptr<MmapFile::MmapReader>& reader, Entry* entry) {
         char* buf, *buf_start;
-        uint64_t n = reader->read(16, buf);
+        uint64_t n = reader->read(KEY_VALUE_LEN, buf);
         buf_start = buf;
-        if (n != 16) {
+        if (n != KEY_VALUE_LEN) {
             return RC::WAL_END_OF_FILE_ERROR;
         }
         uint32_t key_len = decodeFix32(buf);
@@ -69,9 +69,10 @@ public:
         if (n != key_len + value_len + CRC_SIZE_LEN) {
             return RC::WAL_END_OF_FILE_ERROR;
         }
-        entry->key_.reset(buf, key_len);
-        entry->value_.reset(buf + key_len, value_len);
-        uint32_t crc = crc32c::Value(buf_start, 16 + key_len + value_len);
+        entry->resetKey(buf, key_len); 
+        entry->resetValue(buf + key_len, value_len);
+
+        uint32_t crc = crc32c::Value(buf_start, KEY_VALUE_LEN + key_len + value_len);
         if (crc != decodeFix32(buf + key_len + value_len)) {
             return RC::WAL_END_OF_FILE_ERROR;
         }
