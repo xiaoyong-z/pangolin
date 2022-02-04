@@ -28,37 +28,26 @@ TEST(MemTableTest, BasicTest) {
     std::unique_ptr<SkipList> sl = std::make_unique<SkipList>();
     MemTable memtable(std::move(wal), std::move(sl));
 
-    std::string key1 = "key1";
-    std::string value1 = "value1";
-    std::string key2 = "key2";
-    std::string value2 = "value2";
-    std::string key3 = "key3";
-    std::string value3 = "value3";
-    Slice skey1(key1);
-    Slice svalue1(value1);
-    Slice skey2(key2);
-    Slice svalue2(value2);
-    Slice skey3(key3);
-    Slice svalue3(value3);
-    Entry entry1(skey1, svalue1);
-    Entry entry2(skey2, svalue2);
-    Entry entry3(skey1, svalue3);
-    Entry result;
+    for (int i = 0; i < 50; i++) {
+        std::string key = "key" + std::to_string(i);
+        encodeFix32(&key, i);
+        std::string value = "value" + std::to_string(i);
+        encodeFix32(&value, i);
 
-    ASSERT_EQ(memtable.set(&entry1), RC::SUCCESS);
-    ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.getValue(), value1);
+        Slice skey1(key);
+        Slice svalue1(value);
+        Entry entry1(skey1, svalue1);
 
+        Entry result;
 
-    ASSERT_EQ(memtable.set(&entry2), RC::SUCCESS);
-    ASSERT_EQ(memtable.get(skey2, result), RC::SUCCESS);
-    ASSERT_EQ(result.getValue(), value2);
+        ASSERT_EQ(memtable.set(&entry1), RC::SUCCESS);
+        // ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
+        // ASSERT_EQ(result.getValue(), value);
+    }
 
-    ASSERT_EQ(memtable.set(&entry3), RC::SUCCESS);
-    ASSERT_EQ(memtable.get(skey1, result), RC::SUCCESS);
-    ASSERT_EQ(result.getValue(), value3);
+    memtable.scan();
 
-    Arena::Instance()->free();
+    // Arena::Instance()->free();
 }
 
 int main(int argc, char** argv) {
