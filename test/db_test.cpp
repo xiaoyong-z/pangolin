@@ -35,20 +35,19 @@ TEST(DB_TEST, basic) {
 TEST(DB_TEST, basic_write_test) {
     clear_dir();
 
-    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 1024, 4096, 1024, 0.01);
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
     std::shared_ptr<DB> db = std::make_shared<DB>(opt);
 
 
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < 10000; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         db->set(key, value);
     }
 
-    // db->scan();
+    db->scan();
 
-    for (size_t i = 0; i < 1000; i++) {
-        // std::cout << i << std::endl;
+    for (size_t i = 0; i < 10000; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         std::string get_value = db->get(key);
@@ -58,10 +57,10 @@ TEST(DB_TEST, basic_write_test) {
 }
 
 TEST(DB_TEST, recovery_test) {
-    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 1024, 4096, 1024, 0.01);
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
     std::shared_ptr<DB> db = std::make_shared<DB>(opt);
 
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < 10000; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         std::string get_value = db->get(key);

@@ -77,7 +77,7 @@ void BlockIterator::Rewind() {
 }
 
 bool BlockIterator::Seek(const std::string& key) {
-    uint32_t left = 0, right = offset_.size();
+    uint32_t left = 0, right = offset_.size() - 1;
     while (left <= right) {
         uint32_t mid = left + (right - left) / 2;
         std::string key2 = getKey(mid);
@@ -136,6 +136,7 @@ void BlockIterator::getEntry(Entry& entry) {
 }
 
 const std::string BlockIterator::getKey(uint32_t index) {
+    assert (index < offset_.size());
     uint32_t cur_offset = offset_[index];
     uint32_t header = decodeFix32(content_.data() + cur_offset);
     uint16_t overlap = header;
