@@ -58,32 +58,11 @@ TEST(DB_TEST, basic_write_test) {
     }
 }
 
-TEST(DB_TEST, continue_write_test) {
-    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
-    std::shared_ptr<DB> db = std::make_shared<DB>(opt);
-
-    for (size_t i = max_num; i < max_num * 2; i++) {
-        std::string key = "key" + std::to_string(i);
-        std::string value = "value" + std::to_string(i);
-        db->set(key, value);
-    }
-
-    db->scan();
-    
-    for (size_t i = max_num; i < max_num * 2; i++) {
-        std::string key = "key" + std::to_string(i);
-        std::string value = "value" + std::to_string(i);
-        std::string get_value = db->get(key);
-        std::cout << "get_value : " << get_value << std::endl;
-        ASSERT_EQ(get_value.compare(value), 0);
-    }
-}
-
 TEST(DB_TEST, recovery_test) {
     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
     std::shared_ptr<DB> db = std::make_shared<DB>(opt);
 
-    for (size_t i = 0; i < max_num * 2; i++) {
+    for (size_t i = 0; i < max_num; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         std::string get_value = db->get(key);
@@ -96,7 +75,7 @@ TEST(DB_TEST, continue_write_test2) {
     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
     std::shared_ptr<DB> db = std::make_shared<DB>(opt);
 
-    for (size_t i = max_num * 2; i < max_num * 10; i++) {
+    for (size_t i = max_num; i < max_num * 2; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         db->set(key, value);
@@ -104,7 +83,7 @@ TEST(DB_TEST, continue_write_test2) {
 
     db->scan();
     
-    for (size_t i = max_num * 2; i < max_num * 10; i++) {
+    for (size_t i = max_num; i < max_num * 2; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         std::string get_value = db->get(key);
@@ -131,6 +110,25 @@ TEST(DB_TEST, update_test) {
         std::string get_value = db->get(key);
         std::cout << "get_value : " << get_value << std::endl;
         ASSERT_EQ(get_value.compare(value), 0);
+    }
+}
+
+TEST(DB_TEST, delete_test) {
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
+    std::shared_ptr<DB> db = std::make_shared<DB>(opt);
+
+    for (size_t i = 0; i < max_num; i++) {
+        std::string key = "key" + std::to_string(i);
+        db->del(key);
+    }
+
+    db->scan();
+    
+    for (size_t i = 0; i < max_num; i++) {
+        std::string key = "key" + std::to_string(i);
+        std::string get_value = db->get(key);
+        std::cout << "get_value : " << get_value << std::endl;
+        ASSERT_EQ(get_value.compare(""), 0);
     }
 }
 
