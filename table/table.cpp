@@ -43,8 +43,6 @@ RC Table::get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, con
         return RC::TABLE_KEY_NOT_FOUND_IN_BLOCK;   
     }
     iterator->getEntry(entry);
-    entry.setKey(key);
-    entry.key_ = key;
     return RC::SUCCESS;
 }
 

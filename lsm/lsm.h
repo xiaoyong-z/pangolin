@@ -108,6 +108,7 @@ public:
 		}
 
 		for (size_t i = 0; i < immutables_.size(); i++) {
+			// scan();
 			level_manager_->flush(immutables_[i]);
 		}
 		immutables_.clear();
@@ -142,18 +143,24 @@ public:
 	}
 
 	void scan() {
+		std::cout << "==================" << std::endl;
 		std::cout << "memtable : " << std::endl;
 		memtable_->scan();
+		std::cout << "==================" << std::endl;
 		std::cout << "immutable memtables : " << std::endl;
 		for (size_t i = 0; i < immutables_.size(); i++) {
 			std::cout << "immutable table i : " << i << ". " << std::endl;
 			immutables_[i]->scan();
 		}
+		std::cout << "==================" << std::endl;
 		std::cout << "levels : " << std::endl;
 		level_manager_->scan();
 	}
 
 	RC flush() {
+		// std::cout << "called flush " << std::endl;
+		// scan();
+
 		RC result = level_manager_->flush(memtable_);
         if (result != RC::SUCCESS) {
             return result;

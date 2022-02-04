@@ -111,8 +111,8 @@ std::string BlockIterator::getKey() {
     uint16_t overlap = header;
     uint16_t diff = header >> 16;
     std::string diff_key(content_.data() + cur_offset + 4, diff);
-    std::string value(base_key_.substr(0, overlap) + diff_key);
-    return value;
+    std::string key(base_key_.substr(0, overlap) + diff_key);
+    return key;
 }
 
 std::string BlockIterator::getValue() {

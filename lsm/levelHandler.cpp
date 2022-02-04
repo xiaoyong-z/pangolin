@@ -99,6 +99,9 @@ void LevelHandler::scan() {
         std::cout << "scan table i: " << i << ". " << std::endl; 
         std::unique_ptr<TableIterator> iterator = std::make_unique<TableIterator>(tables_[i]);
         while (iterator->Valid()) {
+            if (BloomFilter::contains(iterator->getKey().data(), *tables_[i]->getSSTable()->getFilter()) == false) {
+                std::cout << "warning: " << iterator->getKey().data() << " not in the bloom filter" << std::endl;
+            }
             std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
             iterator->Next();
         }

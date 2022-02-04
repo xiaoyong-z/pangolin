@@ -38,9 +38,9 @@ RC Block::insert(const Entry& entry) {
     } else {
         diff_key_index = diffKey(entry.key_);
     }
-    uint32_t header = diff_key_index | (base_key_.size() - diff_key_index) << 16;
+    uint32_t header = diff_key_index | (entry.key_.size() - diff_key_index) << 16;
     encodeFix32(&content_, header);
-    content_.append(entry.key_.data() + diff_key_index, base_key_.size() - diff_key_index);
+    content_.append(entry.key_.data() + diff_key_index, entry.key_.size() - diff_key_index);
     content_.append(entry.value_.data(), entry.value_.size());
 
     offset_.push_back(size_);

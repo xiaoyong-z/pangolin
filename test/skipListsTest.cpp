@@ -51,8 +51,8 @@ std::string RandString(int len) {
 
 TEST(SkipTest, BasicCRUD) {
     SkipList skipList;
-    std::string key1 = "key1";
-    std::string value1 = "value1";
+    std::string key1 = "key0";
+    std::string value1 = "value0";
     std::string key2 = "key2";
     std::string value2 = "value2";
     std::string key3 = "key3";

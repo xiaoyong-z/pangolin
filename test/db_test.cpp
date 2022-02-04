@@ -32,7 +32,7 @@ void clear_dir() {
 // }
 
 
-TEST(DB_TEST, large_write_test) {
+TEST(DB_TEST, basic_test) {
     clear_dir();
 
     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 1024, 4096, 1024, 0.01);
@@ -48,10 +48,12 @@ TEST(DB_TEST, large_write_test) {
     db->scan();
 
     for (size_t i = 0; i < 50; i++) {
-        std::cout << i << std::endl;
+        // std::cout << i << std::endl;
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
-        ASSERT_EQ(db->get(key).compare(value), 0);
+        std::string get_value = db->get(key);
+        // std::cout << "get_value : " << get_value << std::endl;
+        ASSERT_EQ(get_value.compare(value), 0);
     }
 }
 

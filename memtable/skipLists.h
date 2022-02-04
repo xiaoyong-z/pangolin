@@ -99,9 +99,10 @@ public:
     }
 
     char* allocateNewKey(const Slice& key) {
-        size_t size = key.size();
+        size_t size = key.size() + 1;
         char* addr = arena_->allocateAlign(size);
         memmove(addr, key.data(), size);
+        addr[size] = '\0';
         return addr;
     }
 
@@ -111,9 +112,10 @@ public:
     }
 
     char* allocateNewValue(const Slice& value) {
-        size_t size = value.size() + sizeof(uint64_t);
+        size_t size = value.size() + 1;
         char* addr = arena_->allocateAlign(size);
         memmove(addr, value.data(), value.size());
+        addr[size] = '\0';
         return addr;
     }
 

@@ -29,6 +29,17 @@ RC Builder::flush(SSTable* sstable, uint32_t& table_crc32, bool sync) {
     std::string filter;
     BloomFilter::createFilter(key_hashs_, filter, bits_per_key);
 
+    // for (size_t i = 0; i < blocks_.size(); i++) {
+    //     std::unique_ptr<BlockIterator> iterator = std::make_unique<BlockIterator>(blocks_[i]);
+    //     while (iterator->Valid()) {
+    //         if (BloomFilter::contains(iterator->getKey().data(), filter) == false) {
+    //             std::cout << "warning3: " << iterator->getKey().data() << " not in the bloom filter" << std::endl;
+    //         }
+    //         std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
+    //         iterator->Next();
+    //     }
+    // }
+
     std::string indexBlockContent;
     uint64_t block_len = 0;
     indexBuilder(filter, indexBlockContent, block_len);
@@ -39,8 +50,6 @@ RC Builder::flush(SSTable* sstable, uint32_t& table_crc32, bool sync) {
     char* mmap_addr;
     RC result = sstable->bytes(0, total_len, mmap_addr);
     if (result != RC::SUCCESS) {
-        filter.clear();
-        indexBlockContent.clear();
         return result;
     }
     uint64_t copy_offset = SSTABLE_SIZE_LEN;
@@ -66,6 +75,21 @@ RC Builder::flush(SSTable* sstable, uint32_t& table_crc32, bool sync) {
         result = sstable->sync();
         assert(result == RC::SUCCESS);
     }
+
+
+    // pb::IndexBlock indexblock_;
+    // indexblock_.ParseFromString(indexBlockContent);
+    // for (size_t i = 0; i < blocks_.size(); i++) {
+    //     std::unique_ptr<BlockIterator> iterator = std::make_unique<BlockIterator>(blocks_[i]);
+    //     while (iterator->Valid()) {
+    //         if (BloomFilter::contains(iterator->getKey().data(), indexblock_.bloom_filter()) == false) {
+    //             std::cout << "warning2: " << iterator->getKey().data() << " not in the bloom filter" << std::endl;
+    //         }
+    //         std::cout << "key: " << iterator->getKey() << ", value: " << iterator->getValue() << std::endl;
+    //         iterator->Next();
+    //     }
+    // }
+
     return RC::SUCCESS;
 }
 
@@ -73,13 +97,13 @@ RC Builder::indexBuilder(const std::string& filter, std::string& content, uint64
     pb::IndexBlock indexblock;
     indexblock.set_key_count(key_count_);
     indexblock.set_max_version(max_version_);
-    indexblock.set_bloom_filter(std::move(filter));
+    indexblock.set_bloom_filter(filter);
 
     uint64_t block_offset = 0; 
     for (size_t i = 0; i < blocks_.size(); i++) {
         std::shared_ptr<Block> block = blocks_[i];
         pb::BlockOffset* offset = indexblock.add_offsets();
-        offset->set_base_key(std::move(block->base_key_));
+        offset->set_base_key(block->base_key_);
         offset->set_offset(block_offset);
         offset->set_len(block->getSize());
         block_offset += block->getSize();
