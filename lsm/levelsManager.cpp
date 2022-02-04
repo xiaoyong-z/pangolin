@@ -39,7 +39,9 @@ LevelsManager::LevelsManager(const std::shared_ptr<Options>& options, std::share
     }
 
     for (int i = 0; i < max_level_num; i++) {
-        levels_[i]->sortTables();
+        if (levels_[i]->getTableNum() > 0) {
+            levels_[i]->sortTables();
+        }
     }
 
     cur_file_id_.fetch_add(max_fid + 1);

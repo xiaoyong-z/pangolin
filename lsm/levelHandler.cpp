@@ -110,7 +110,13 @@ void LevelHandler::scan() {
 
 // before calling this function, make sure acuqire the write lock first
 void LevelHandler::sortTables() {
-    std::sort(tables_.begin(), tables_.end(), [](const std::shared_ptr<Table>& a, const std::shared_ptr<Table>& b) {
-        return Util::compareKey(a->getMinKey(), b->getMinKey());
-    });
+    if (level_num_ == 0) {
+        std::sort(tables_.begin(), tables_.end(), [](const std::shared_ptr<Table>& a, const std::shared_ptr<Table>& b) {
+            return a->getFD() > b->getFD();
+        });
+    } else {
+        std::sort(tables_.begin(), tables_.end(), [](const std::shared_ptr<Table>& a, const std::shared_ptr<Table>& b) {
+            return Util::compareKey(a->getMinKey(), b->getMinKey()) > 0;
+        });
+    }
 }
