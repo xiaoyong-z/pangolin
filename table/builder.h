@@ -24,6 +24,8 @@ public:
     
     uint64_t estimateSize(Entry& entry);
 
+    uint32_t getSize();
+
 private:
     std::shared_ptr<Options> opt_;
     std::shared_ptr<Block> cur_block_;
@@ -31,5 +33,6 @@ private:
     std::vector<uint32_t> key_hashs_;
     uint32_t key_count_;
     uint32_t max_version_;
+    std::atomic<uint32_t> size_;
 };
 #endif

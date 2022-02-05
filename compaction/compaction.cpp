@@ -166,6 +166,10 @@ void Compaction::performCompaction() {
         }
         Entry entry;
         iterator->getEntry(entry);
+        
+        // std::string key = entry.getKey().ToString();
+        // std::cout << "iterator: " << Util::removeMeta(key) << std::endl;
+        
         if (builder->checkFinish(entry)) {
             std::shared_ptr<Table> table = level_manager_->newTable();
             table->flush(builder, false);
@@ -174,6 +178,12 @@ void Compaction::performCompaction() {
             builders.push_back(builder);
         }
         builder->insert(entry);
+    }
+
+    if (builder->getSize() > 0) {
+        std::shared_ptr<Table> table = level_manager_->newTable();
+        table->flush(builder, false);
+        new_tables.emplace_back(table);
     }
 
     for (size_t i = 0; i < new_tables.size(); i++) {

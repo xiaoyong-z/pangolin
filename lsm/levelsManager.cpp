@@ -51,7 +51,7 @@ RC LevelsManager::get(const Slice& key, Entry& entry) {
     if (levels_[0]->level0Get(key, entry, opt_) == RC::SUCCESS) {
         return RC::SUCCESS;
     }
-    for (int i = 0; i < opt_->getMaxLevelNum(); i++) {
+    for (int i = 1; i < opt_->getMaxLevelNum(); i++) {
         if (levels_[i]->levelNGet(key, entry, opt_) == RC::SUCCESS) {
             return RC::SUCCESS;
         }

@@ -1,9 +1,10 @@
 #include "builder.h"
 
 
-Builder::Builder(const std::shared_ptr<Options>& opt): opt_(opt), key_count_(0), max_version_(0) {}
+Builder::Builder(const std::shared_ptr<Options>& opt): opt_(opt), key_count_(0), max_version_(0), size_(0) {}
 
 RC Builder::insert(const Entry& entry) {
+    size_.fetch_add(1);
     if (cur_block_ == nullptr) {
         cur_block_ = std::make_shared<Block>(opt_->block_size_);
     }
@@ -134,4 +135,8 @@ uint64_t Builder::estimateSize(Entry& entry) {
     // Todo: fix estimate_size
     estimate_size += 512;
     return estimate_size;
+}
+
+uint32_t Builder::getSize() {
+    return size_.load();
 }
