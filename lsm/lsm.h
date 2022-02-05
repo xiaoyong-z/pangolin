@@ -9,7 +9,9 @@
 #include "compactionState.h"
 
 class LSM {
-	LSM(std::shared_ptr<Options> options):last_version_(0), options_(options) {}
+	LSM(std::shared_ptr<Options> options):last_version_(0), options_(options) {
+		compaction_state_ = std::make_shared<CompactionState>(options_->getCompactionThreadNum());
+	}
 public:
 	~LSM() {
 		stopCompaction();
@@ -23,7 +25,6 @@ public:
 		ManifestFile* manifest_file = newManifest(options);
 		lsm->manifest_file_.reset(manifest_file);
 		lsm->level_manager_.reset(newLevelManager(options, lsm->manifest_file_));
-
 
 		RC result = recoveryWAL(options, lsm->memtable_, lsm->immutables_, lsm->level_manager_);
 		if (result != RC::SUCCESS) {
@@ -204,10 +205,9 @@ public:
 
 	RC startCompaction() {
 		int compaction_thread_num = options_->getCompactionThreadNum();
-		std::shared_ptr<CompactionState> state = std::make_shared<CompactionState>(compaction_thread_num);
 		for (int i = 0; i < compaction_thread_num; i++) {
 			threads_.emplace_back(std::make_unique<Thread>());
-			Compaction* compaction = new Compaction(options_, state, getLevelManager(), i);
+			Compaction* compaction = new Compaction(options_, compaction_state_, getLevelManager(), i);
 			threads_[i]->start(compaction);
 		}
 		return RC::SUCCESS;
@@ -215,6 +215,14 @@ public:
 
 	inline std::shared_ptr<LevelsManager>& getLevelManager() {
 		return level_manager_;
+	}
+
+	void manualCompaction() {
+		int compaction_thread_num = options_->getCompactionThreadNum();
+		for (int i = 0; i < compaction_thread_num; i++) {
+			std::shared_ptr<Compaction> compaction = std::make_shared<Compaction>(options_, compaction_state_, getLevelManager(), i);
+			compaction->doOnce();
+		}
 	}
 
 
@@ -227,5 +235,6 @@ private:
 	std::shared_ptr<Options> options_;
 	std::shared_ptr<ManifestFile> manifest_file_;
 	std::vector<std::unique_ptr<Thread>> threads_;
+	std::shared_ptr<CompactionState> compaction_state_;
 };
 #endif

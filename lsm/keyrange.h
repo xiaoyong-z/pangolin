@@ -55,11 +55,11 @@ public:
         if (empty_) {
             return true;
         }
-        if (Util::compareKey(min_key_, range.min_key_) > 0) {
+        if (Util::compareKey(min_key_, range.max_key_) > 0) {
             return false;
         }
 
-        if (Util::compareKey(max_key_, range.max_key_) < 0) {
+        if (Util::compareKey(max_key_, range.min_key_) < 0) {
             return false;
         }
         return true;
@@ -110,6 +110,7 @@ public:
         if (isEmpty()) {
             min_key_ = range.min_key_;
             max_key_ = range.max_key_;
+            setNotEmpty();
             return;
         }
 
@@ -125,6 +126,10 @@ public:
 
     inline const bool isEmpty() const{
         return empty_;
+    }
+
+    inline void setNotEmpty() {
+        empty_ = false;
     }
 
     bool equals(const KeyRange& range) {

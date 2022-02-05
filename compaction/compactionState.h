@@ -17,7 +17,6 @@ public:
         if (hasLock == false) {
             rwLock_.lock_shared();
         }
-        ReadLock lock(rwLock_);
         for (const auto& range: levels_ranges_[level_num]) {
             if (range.overlapWith(another_range)) {
                 return true;
@@ -31,10 +30,10 @@ public:
 
     bool compareAndAdd(const CompactionPlan& plan) {
         WriteLock lock(rwLock_);
-        if (overlapsWith(plan.this_level_num_, plan.this_range_)) {
+        if (overlapsWith(plan.this_level_num_, plan.this_range_, true)) {
             return false;
         }
-        if (overlapsWith(plan.next_level_num_, plan.next_range_)) {
+        if (overlapsWith(plan.next_level_num_, plan.next_range_, true)) {
             return false;
         }
         levels_ranges_[plan.this_level_num_].push_back(plan.this_range_);

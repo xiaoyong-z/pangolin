@@ -5,13 +5,13 @@ Builder::Builder(const std::shared_ptr<Options>& opt): opt_(opt), key_count_(0),
 
 RC Builder::insert(const Entry& entry) {
     if (cur_block_ == nullptr) {
-        cur_block_ = std::make_shared<Block>();
+        cur_block_ = std::make_shared<Block>(opt_->block_size_);
     }
-    if (cur_block_->checkFinish(entry, opt_->block_size_)) {
+    if (cur_block_->checkFinish(entry)) {
         key_count_ += cur_block_->getKeyCount();
         cur_block_->finish();
         blocks_.push_back(cur_block_);
-        cur_block_ = std::make_shared<Block>();
+        cur_block_ = std::make_shared<Block>(opt_->block_size_);
     }
     // cal max version
     key_hashs_.push_back(BloomFilter::hash(entry.getKey().data(), entry.getKey().size() - META_SIZE));
@@ -113,11 +113,11 @@ RC Builder::indexBuilder(const std::string& filter, std::string& content, uint64
     return RC::SUCCESS;
 }
 
-bool Builder::checkFinish() {
-    return estimateSize() >= opt_->SSTable_max_sz;
+bool Builder::checkFinish(Entry& entry) {
+    return estimateSize(entry) > opt_->SSTable_max_sz;
 }
 
-uint64_t Builder::estimateSize() {
+uint64_t Builder::estimateSize(Entry& entry) {
     uint64_t estimate_size = 0;
     for (size_t i = 0; i < blocks_.size(); i++) {
         // block size
@@ -125,9 +125,13 @@ uint64_t Builder::estimateSize() {
         // block first key in index block + block offset + block len
         estimate_size += (blocks_[i]->base_key_.size() + 8 + 4);
     }
-    estimate_size += cur_block_->getSize();
+    if (cur_block_ != nullptr) {
+        estimate_size += cur_block_->getSize();
+    }
     estimate_size += BloomFilter::estimateSize(key_hashs_, key_hashs_.size(), opt_->bloom_false_positive_);
     // max_version in index block + key count in index block + index block len + checksum + checksum len 
     estimate_size += 4 + 4 + 4 + 4 + 4;
+    // Todo: fix estimate_size
+    estimate_size += 512;
     return estimate_size;
 }

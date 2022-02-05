@@ -11,17 +11,19 @@ class SSTable;
 class Block {
 public:
     friend class Builder;
-    Block();
+    Block(uint64_t max_size);
 
-    Block(const pb::BlockOffset& blockOffset, SSTable* sstable);
+    Block(const pb::BlockOffset& blockOffset, SSTable* sstable, uint64_t max_size = 0);
 
     int diffKey(const Slice& key);
 
     RC insert(const Entry& entry);
 
-    bool checkFinish(const Entry& entry, uint64_t max_size);
+    bool checkFinish(const Entry& entry);
 
     uint64_t estimateSize();
+
+    uint64_t estimateSize(const Entry& entry);
 
     uint32_t getKeyCount();
 
@@ -41,5 +43,6 @@ private:
 
     std::string base_key_;
     uint64_t size_;
+    uint64_t max_size_;
 };
 #endif

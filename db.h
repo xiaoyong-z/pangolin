@@ -18,6 +18,7 @@ public:
 	std::string get(const std::string& key);
 	// Used for debug only
 	void scan();
+	void compaction();
 private:
     std::shared_ptr<Options> opt_;
 	std::shared_ptr<LSM> lsm_;

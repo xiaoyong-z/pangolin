@@ -32,3 +32,7 @@ std::string DB::get(const std::string& key) {
 void DB::scan() {
     lsm_->scan();
 }
+
+void DB::compaction() {
+    lsm_->manualCompaction();
+}

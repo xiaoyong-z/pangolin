@@ -23,6 +23,8 @@ public:
     void UnWLock();
 
 private:
+    int seekTable(const Slice& key);
+
     RWLock rwLock_;
     int level_num_;
     std::vector<std::shared_ptr<Table>> tables_;

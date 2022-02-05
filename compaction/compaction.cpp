@@ -17,11 +17,17 @@ Compaction::~Compaction() {
 void Compaction::run() {
     init();
     while (isRunning()) {
-        std::cout << "compactor: " << level_id_ << " working..." <<  std::endl;
+        // std::cout << "compactor: " << level_id_ << " working..." <<  std::endl;
         if (needCompaction()) {
             doCompaction();
         }
         sleep(CompactionConfig::compaction_duration);
+    }
+}
+
+void Compaction::doOnce() {
+    if (needCompaction()) {
+        doCompaction();
     }
 }
 
@@ -56,7 +62,8 @@ bool Compaction::generateCompactionPlan() {
     if (level_id_ == 0) {
         return fillTablesL0ToL1();
     } else {
-        return fillTablesLnToLnp1();
+        return false;
+        // return fillTablesLnToLnp1();
     }
 }
 
@@ -85,7 +92,7 @@ bool Compaction::fillTablesL0ToL1() {
     std::vector<std::shared_ptr<Table>>& next_level_tables = next_level_->getTables();
     std::pair<int, int> pair = plan_.this_range_.overlappingTables(next_level_tables);
     std::vector<std::shared_ptr<Table>> next_level_output;
-    for (int i = pair.first; i <= pair.second; i++) {
+    for (int i = pair.first; i < pair.second; i++) {
         next_level_output.push_back(next_level_tables[i]);
     }
     next_level_->UnRLock();
@@ -151,6 +158,7 @@ void Compaction::performCompaction() {
     std::shared_ptr<Builder> builder;
     std::vector<std::shared_ptr<Builder>> builders;
     std::vector<std::shared_ptr<Table>> new_tables;
+
     for (; iterator->Valid(); iterator->Next()) {
         if (builder.get() == nullptr) {
             builder = std::make_shared<Builder>(opt_);
@@ -158,13 +166,14 @@ void Compaction::performCompaction() {
         }
         Entry entry;
         iterator->getEntry(entry);
-        builder->insert(entry);
-        if (builder->checkFinish()) {
+        if (builder->checkFinish(entry)) {
             std::shared_ptr<Table> table = level_manager_->newTable();
             table->flush(builder, false);
             new_tables.emplace_back(table);
-            builder = nullptr;
+            builder = std::make_shared<Builder>(opt_);
+            builders.push_back(builder);
         }
+        builder->insert(entry);
     }
 
     for (size_t i = 0; i < new_tables.size(); i++) {

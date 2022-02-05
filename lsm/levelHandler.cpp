@@ -2,7 +2,7 @@
 
 
 RC LevelHandler::level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
-    for (size_t i = tables_.size() - 1; i >= 0; i--) {
+    for (int i = tables_.size() - 1; i >= 0; i--) {
         if (Table::get(tables_[i], key, entry, opt) == RC::SUCCESS) {
             return RC::SUCCESS;
         }
@@ -11,6 +11,11 @@ RC LevelHandler::level0Get(const Slice& key, Entry& entry, const std::shared_ptr
 }
 
 RC LevelHandler::levelNGet(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+    for (int i = 0; i >= 0; i--) {
+        if (Table::get(tables_[i], key, entry, opt) == RC::SUCCESS) {
+            return RC::SUCCESS;
+        }
+    }
     return RC::SUCCESS;
 }
 
@@ -130,4 +135,12 @@ void LevelHandler::sortTables() {
             return Util::compareKey(a->getMinKey(), b->getMinKey()) > 0;
         });
     }
+}
+
+int LevelHandler::seekTable(const Slice& key) {
+    int left = 0, right = tables_.size() - 1;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        
+    };
 }

@@ -16,6 +16,7 @@ public:
 
     ~Compaction() override;
     void run() override;
+    void doOnce();
     void init();
     bool needCompaction();
     bool doCompaction();

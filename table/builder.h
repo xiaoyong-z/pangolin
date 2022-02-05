@@ -20,9 +20,9 @@ public:
 
     RC indexBuilder(const std::string& filter, std::string& content, uint64_t& block_len);
 
-    bool checkFinish();
+    bool checkFinish(Entry& entry);
     
-    uint64_t estimateSize();
+    uint64_t estimateSize(Entry& entry);
 
 private:
     std::shared_ptr<Options> opt_;

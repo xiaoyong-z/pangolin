@@ -63,6 +63,7 @@ meta_test("test/memtable_test.cpp")
 # meta_test("test/recovery_test.cpp")
 # meta_test("test/thread_test.cpp")
 meta_test("test/db_test.cpp")
+meta_test("test/compaction_test.cpp")
 
 execute_process (
     COMMAND bash -c "rm -rf work_test*"

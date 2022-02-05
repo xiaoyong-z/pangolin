@@ -1,9 +1,9 @@
 #include "block.h"
-Block::Block(): base_key_(""), size_(0) {
+Block::Block(uint64_t max_size): base_key_(""), size_(0), max_size_(max_size) {
 
 }
 
-Block::Block(const pb::BlockOffset& blockOffset, SSTable* sstable) {
+Block::Block(const pb::BlockOffset& blockOffset, SSTable* sstable, uint64_t max_size): max_size_(max_size){
     uint32_t block_len = blockOffset.len();
     size_ = block_len;
     uint64_t offset = blockOffset.offset();
@@ -48,15 +48,19 @@ RC Block::insert(const Entry& entry) {
     return RC::SUCCESS;
 }
 
-bool Block::checkFinish(const Entry& entry, uint64_t max_size) {
+bool Block::checkFinish(const Entry& entry) {
     uint64_t estimate_size = estimateSize() + 4 + entry.getKey().size() + entry.getValue().size();
-    return estimate_size >= max_size;
+    return estimate_size >= max_size_;
 }
 
 uint64_t Block::estimateSize() {
-    uint64_t offset_crc_size = offset_.size() * 4 + 4 + 8 + 4;
+    uint64_t offset_crc_size = offset_.size() * 4 + 4 + CRC_SIZE_LEN + 8;
     uint64_t estimate_size = content_.size() + offset_crc_size;
     return estimate_size;
+}
+
+uint64_t Block::estimateSize(const Entry& entry) {
+    return estimateSize() + 4 + entry.getKey().size() + entry.getValue().size();
 }
 
 uint32_t Block::getKeyCount() {
@@ -87,6 +91,9 @@ std::vector<uint32_t>& Block::getOffsets() {
 }
 
 uint64_t Block::getSize() {
+    if (max_size_ != 0) {
+        assert (size_ < max_size_);
+    }
     return size_;
 }
 

@@ -313,21 +313,20 @@ void TableMergeIterator::getEntry(Entry& entry) {
 
 void TableMergeIterator::Update() {
     min_iterator_ = -1;
-    std::string min_key;
+    std::string min_key = "";
     for (size_t i = 0; i < tables_.size(); i++) {
         if (iterators_[i]->Valid() == false) {
             continue;
         }
-        if (i == 0) {
+        std::string key = iterators_[i]->getKey();
+        if (min_key == "") {
+            min_key = key;
             min_iterator_ = i;
-            min_key = iterators_[i]->getKey();
             continue;
         }
-        std::string key = iterators_[i]->getKey();
         if (Util::compareKey(key, min_key) < 0) {
-            key = min_key;
+            min_key = key;
             min_iterator_ = i;
         }
-    }
-
+    }  
 }
