@@ -17,15 +17,17 @@ public:
         if (hasLock == false) {
             rwLock_.lock_shared();
         }
+        bool result = false;
         for (const auto& range: levels_ranges_[level_num]) {
             if (range.overlapWith(another_range)) {
-                return true;
+                result = true;
+                break;
             }
         }
         if (hasLock == false) {
             rwLock_.unlock_shared();
         }
-        return false;
+        return result;
     }
 
     bool compareAndAdd(const CompactionPlan& plan) {
@@ -36,9 +38,12 @@ public:
         if (overlapsWith(plan.next_level_num_, plan.next_range_, true)) {
             return false;
         }
-        levels_ranges_[plan.this_level_num_].push_back(plan.this_range_);
-        levels_ranges_[plan.next_level_num_].push_back(plan.next_range_);
-
+        if (plan.this_range_.isEmpty() == false) {
+            levels_ranges_[plan.this_level_num_].push_back(plan.this_range_);
+        }
+        if (plan.next_range_.isEmpty() == false) {
+            levels_ranges_[plan.next_level_num_].push_back(plan.next_range_);
+        }
         copy(plan.this_tables_.begin(), plan.this_tables_.end(), inserter(levels_table_set_[plan.this_level_num_], 
             levels_table_set_[plan.this_level_num_].begin()));
 

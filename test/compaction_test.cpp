@@ -54,8 +54,31 @@ TEST(COMPACTION_TEST, read_level_1_test) {
     // db->compaction();
     // db->compaction();
     // db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
 
     std::cout << "end compaction" << std::endl;
+    // db->scan();
+
+    for (size_t i = 0; i < max_num2; i++) {
+        std::string key = "key" + std::to_string(i);
+        std::string value = "value" + std::to_string(i);
+        std::string get_value = db->get(key);
+        // std::cout << "get_value : " << get_value << std::endl;
+        ASSERT_EQ(get_value.compare(value), 0);
+    }
+}
+
+TEST(DB_TEST, recovery_test) {
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
+    std::shared_ptr<DB> db = std::make_shared<DB>(opt);
+
     db->scan();
 
     for (size_t i = 0; i < max_num2; i++) {

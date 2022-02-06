@@ -42,15 +42,20 @@ bool Compaction::needCompaction() {
         uint64_t this_level_size = this_level_->getLevelSize();
         if (this_level_size > cur_level_max_size_) {
             return true;
+        } else {
+            std::cout << "fail" << std::endl;
         }
     }
     return false;
 }
 
 bool Compaction::doCompaction() {
-    if (generateCompactionPlan() == false) {
-        return false;
-    }
+
+    assert (generateCompactionPlan());
+
+    // if (generateCompactionPlan() == false) {
+    //     return false;
+    // }
 
     performCompaction();
 
@@ -118,7 +123,8 @@ bool Compaction::fillTablesLnToLnp1() {
             return a->getMaxVersion() > b->getMaxVersion(); 
         });
 
-    for (size_t i = 0; i < this_level_tables.size(); i++) {
+    size_t i;
+    for (i = 0; i < this_level_tables.size(); i++) {
         std::shared_ptr<Table>& table = this_level_tables[i];
         KeyRange tkr(table);
         if (state_->overlapsWith(plan_.this_level_num_, tkr)) {
@@ -141,11 +147,17 @@ bool Compaction::fillTablesLnToLnp1() {
         plan_.next_range_ = std::move(nkr);
         if (state_->compareAndAdd(plan_) == true) {
             break;
+        } else {
+            std::cout << "fail" << std::endl;
         }
     }
+    
 
     this_level_->UnRLock();
     next_level_->UnRLock();
+    if (i == this_level_tables.size()) {
+        std::cout << "fail" << std::endl;
+    }
     return true;
 }
 

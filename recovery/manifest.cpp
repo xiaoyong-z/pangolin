@@ -91,6 +91,7 @@ void ManifestFile::buildManifestChange(pb::ManifestChange*& change, pb::Manifest
     if (op == pb::ManifestChange_Operation_DELETE) {
         change->set_level(level);
         change->set_op(op);
+        change->set_id(fd);
     } else if (op == pb::ManifestChange_Operation_CREATE) {
         change->set_check_sum(crc);
         change->set_id(fd);
@@ -224,17 +225,18 @@ RC ManifestFile::revertToManifest(std::set<uint32_t>& sstable_file_id) {
         }
     }
 
-    for (auto it = sstable_file_id.begin(); it != sstable_file_id.end(); ) {
+    std::set<uint32_t> temp;
+    for (auto it = sstable_file_id.begin(); it != sstable_file_id.end(); it++) {
         if (tables.find(*it) == tables.end()) {
             std::string file_name = Util::filePathJoin(opt_->work_dir_, *it, SSTableConfig::filePostfix);
             if (remove(file_name.data()) != 0) {
                 return RC::MANIFEST_REMOVE_FILE_FAIL;
             }
-            sstable_file_id.erase(it);
         } else {
-            ++it;
+            temp.insert(*it);
         }
     }
+    sstable_file_id = temp;
     return RC::SUCCESS;
 }
 

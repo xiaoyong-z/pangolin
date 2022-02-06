@@ -11,6 +11,9 @@ RC LevelHandler::level0Get(const Slice& key, Entry& entry, const std::shared_ptr
 }
 
 RC LevelHandler::levelNGet(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt) {
+    if (tables_.size() == 0) {
+        return RC::LEVELS_KEY_NOT_FOUND_IN_CUR_LEVEL;
+    }
     int index = seekTable(key);
     if (Table::get(tables_[index], key, entry, opt) == RC::SUCCESS) {
         return RC::SUCCESS;

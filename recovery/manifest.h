@@ -46,7 +46,7 @@ public:
             creations_++;
         } else if (operation == pb::ManifestChange_Operation_DELETE) {
             uint32_t id = change.id();
-            if (tables_.find(id) != tables_.end()) {
+            if (tables_.find(id) == tables_.end()) {
                 return RC::MANIFEST_TABLE_NOT_EXIST;
             }
             uint32_t level = change.level();

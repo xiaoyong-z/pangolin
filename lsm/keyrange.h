@@ -37,6 +37,7 @@ public:
 
     void setKeyRange(const std::vector<std::shared_ptr<Table>>& tables) {
         if (tables.size() == 0) {
+            empty_ = true;
             return;
         }
         min_key_ = tables[0]->getMinKey();
@@ -52,6 +53,9 @@ public:
     }
 
     bool overlapWith(const KeyRange& range) const {
+        if (range.empty_) {
+            return false;
+        }
         if (empty_) {
             return true;
         }
@@ -107,6 +111,9 @@ public:
     }
 
     void extend(const KeyRange& range) {
+        if (range.empty_) {
+            return;
+        }
         if (isEmpty()) {
             min_key_ = range.min_key_;
             max_key_ = range.max_key_;
@@ -133,6 +140,9 @@ public:
     }
 
     bool equals(const KeyRange& range) {
+        if (empty_ == true && range.empty_ == true) {
+            return true;
+        }
         if (Util::compareBytes(min_key_, range.min_key_) == 0 && 
             Util::compareBytes(max_key_, range.max_key_) == 0) {
             return true;
