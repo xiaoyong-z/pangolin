@@ -15,7 +15,7 @@ RC LevelHandler::levelNGet(const Slice& key, Entry& entry, const std::shared_ptr
     if (Table::get(tables_[index], key, entry, opt) == RC::SUCCESS) {
         return RC::SUCCESS;
     }
-    return RC::SUCCESS;
+    return RC::LEVELS_KEY_NOT_FOUND_IN_CUR_LEVEL;
 }
 
 void LevelHandler::appendTable(const std::shared_ptr<Table>& table) {
@@ -81,6 +81,10 @@ void LevelHandler::replaceTables(std::vector<std::shared_ptr<Table>>& old_tables
     tables_.clear();
     tables_.assign(temp_tables.begin(), temp_tables.end());
     sortTables();
+    level_size_ = 0;
+    for (size_t i = 0; i < tables_.size(); i++) {
+        level_size_ += tables_[i]->getSize();
+    }
     UnWLock();
 }
 
@@ -102,6 +106,10 @@ void LevelHandler::deleteTables(std::vector<std::shared_ptr<Table>>& old_tables)
     }
     tables_.clear();
     tables_.assign(temp_tables.begin(), temp_tables.end());
+    level_size_ = 0;
+    for (size_t i = 0; i < tables_.size(); i++) {
+        level_size_ += tables_[i]->getSize();
+    }
     sortTables();
     UnWLock();
 }

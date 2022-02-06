@@ -161,7 +161,7 @@ const std::string BlockIterator::getValue(uint32_t index) {
 }
 
 TableIterator::TableIterator(const std::shared_ptr<Table>& table): 
-    table_(table), pos_(0), end_(table->getSize()), index_block_(table_->getIndexBlock()) {
+    table_(table), pos_(0), end_(table->getBlockCount()), index_block_(table_->getIndexBlock()) {
     updateBlock();
 }
 

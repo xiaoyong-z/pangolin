@@ -28,7 +28,7 @@ public:
         return file_->sync();
     }
     
-    RC init(uint32_t& crc, uint64_t& size) {
+    RC init() {
         char* mmap_ptr;
         RC result = file_->get_mmap_ptr(mmap_ptr);
         if (result != RC::SUCCESS) {
@@ -36,11 +36,12 @@ public:
         }
         raw_ptr_ = mmap_ptr;
         uint64_t sstable_len = decodeFix64(mmap_ptr); 
+        size_ = sstable_len;
         mmap_ptr += sstable_len;
         uint32_t check_sum_len = decodeFix32(mmap_ptr - sizeof(uint32_t));
         mmap_ptr -= sizeof(uint32_t);
         uint32_t check_sum = decodeFix32(mmap_ptr - check_sum_len);
-        crc = check_sum;
+        crc_ = check_sum;
         mmap_ptr -= check_sum_len;
         uint64_t index_len = decodeFix64(mmap_ptr - sizeof(uint64_t));
         mmap_ptr -= sizeof(uint64_t);
@@ -54,19 +55,19 @@ public:
         mmap_ptr -= index_len;
         bloom_filter_.reset(indexblock_.release_bloom_filter());
         
-        size_ = indexblock_.offsets_size();
-        if (size_ == 0) {
+        blockCount_ = indexblock_.offsets_size();
+        if (blockCount_ == 0) {
             return RC::SUCCESS;
         }
-        assert(size_ > 0);
+        assert(blockCount_ > 0);
 
         min_key_ = indexblock_.offsets(0).base_key();
         // min_key_ = Util::removeMeta(min_key_);
         //min_key_ = Slice(indexblock_.offsets(0).base_key());
 
-        std::string max_block_base_key = indexblock_.offsets(size_ - 1).base_key();
-        uint64_t max_block_offset = indexblock_.offsets(size_ - 1).offset();
-        uint64_t max_block_len = indexblock_.offsets(size_ - 1).len();
+        std::string max_block_base_key = indexblock_.offsets(blockCount_ - 1).base_key();
+        uint64_t max_block_offset = indexblock_.offsets(blockCount_ - 1).offset();
+        uint64_t max_block_len = indexblock_.offsets(blockCount_ - 1).len();
 
         std::string block_content(raw_ptr_ + SSTABLE_SIZE_LEN + max_block_offset, max_block_len);
         
@@ -83,7 +84,7 @@ public:
         std::string diff_key(block_content.data() + last_offset + 4, diff);
         max_key_ = max_block_base_key.substr(0, overlap) + diff_key;
         // max_key_ = Util::removeMeta(max_key_);
-        size = indexblock_.offsets().size();
+        // size = indexblock_.offsets().size();
         return RC::SUCCESS;
     }
 
@@ -103,8 +104,16 @@ public:
         return indexblock_;
     }
 
-    inline uint32_t getSize() {
+    inline uint64_t getSize() {
         return size_;
+    }
+
+    inline uint32_t getBlockCount() {
+        return blockCount_;
+    }
+
+    inline uint32_t getCRC() {
+        return crc_;
     }
 
     inline std::string* getFilter() {
@@ -119,7 +128,9 @@ private:
     std::string max_key_;
     std::unique_ptr<std::string> bloom_filter_;
     uint32_t max_version_;
-    uint32_t size_;
+    uint32_t blockCount_;
+    uint64_t size_;
+    uint32_t crc_;
 };
 
 #endif

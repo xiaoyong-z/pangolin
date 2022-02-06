@@ -4,7 +4,7 @@
 
 class LevelHandler {
 public:
-    LevelHandler(int level_num): level_num_(level_num) {};
+    LevelHandler(int level_num): level_num_(level_num), level_size_(0) {};
 
     RC level0Get(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);
     RC levelNGet(const Slice& key, Entry& entry, const std::shared_ptr<Options>& opt);

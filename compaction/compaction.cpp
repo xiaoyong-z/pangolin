@@ -39,7 +39,8 @@ bool Compaction::needCompaction() {
             return true;
         }
     } else {
-        if (this_level_->getLevelSize() > cur_level_max_size_) {
+        uint64_t this_level_size = this_level_->getLevelSize();
+        if (this_level_size > cur_level_max_size_) {
             return true;
         }
     }
@@ -62,8 +63,8 @@ bool Compaction::generateCompactionPlan() {
     if (level_id_ == 0) {
         return fillTablesL0ToL1();
     } else {
-        return false;
-        // return fillTablesLnToLnp1();
+        // return false;
+        return fillTablesLnToLnp1();
     }
 }
 
@@ -127,7 +128,7 @@ bool Compaction::fillTablesLnToLnp1() {
         std::vector<std::shared_ptr<Table>>& next_level_tables = next_level_->getTables();
         std::pair<int, int> pair = plan_.this_range_.overlappingTables(next_level_tables);
         std::vector<std::shared_ptr<Table>> next_level_output;
-        for (int i = pair.first; i <= pair.second; i++) {
+        for (int i = pair.first; i < pair.second; i++) {
             next_level_output.push_back(next_level_tables[i]);
         }
         KeyRange nkr(next_level_output);
@@ -138,8 +139,8 @@ bool Compaction::fillTablesLnToLnp1() {
         plan_.this_range_ = std::move(tkr);
         plan_.next_tables_ = std::move(next_level_output);
         plan_.next_range_ = std::move(nkr);
-        if (state_->compareAndAdd(plan_) == false) {
-            continue;
+        if (state_->compareAndAdd(plan_) == true) {
+            break;
         }
     }
 
@@ -199,7 +200,9 @@ void Compaction::performCompaction() {
     assert(result == RC::SUCCESS);
 
     this_level_->deleteTables(plan_.this_tables_);
+    std::cout << "After compaction, this level size: " << this_level_->getLevelSize() << std::endl;
     next_level_->replaceTables(plan_.next_tables_, new_tables);
+    std::cout << "After compaction, next level size: " << next_level_->getLevelSize() << std::endl;
     
     return;
 }

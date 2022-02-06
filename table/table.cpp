@@ -1,8 +1,6 @@
 
 #include "table.h"
-Table::Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id), crc_(0), refs_(0) {
-
-}
+Table::Table(SSTable* sstable_file, uint32_t file_id): sstable_(sstable_file), fd_(file_id), crc_(0), refs_(0) {}
 
 Table* Table::NewTable(const std::string& dir_name, uint32_t file_id, uint64_t sstable_max_sz) {
     std::shared_ptr<FileOptions> file_opt = std::make_shared<FileOptions>();
@@ -47,7 +45,7 @@ RC Table::get(std::shared_ptr<Table>& table, const Slice& key, Entry& entry, con
 }
 
 RC Table::open() {
-    sstable_->init(crc_, size_); 
+    sstable_->init(); 
     return RC::SUCCESS;
 }
 
@@ -59,13 +57,16 @@ uint32_t Table::getFD() {
     return fd_;
 }
 
-uint32_t Table::getCRC() {
-    assert(crc_ != 0);
-    return crc_;
+uint64_t Table::getSize() {
+    return sstable_->getSize();
 }
 
-const uint64_t Table::getSize() {
-    return size_;
+uint32_t Table::getBlockCount() {
+    return sstable_->getBlockCount();
+}
+
+uint32_t Table::getCRC() {
+    return sstable_->getCRC();;
 }
 
 std::string& Table::getMinKey() {

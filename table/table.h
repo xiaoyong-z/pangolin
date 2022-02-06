@@ -27,7 +27,9 @@ public:
 
     uint32_t getCRC();
 
-    const uint64_t getSize();
+    uint64_t getSize();
+
+    uint32_t getBlockCount();
 
     std::string& getMinKey();
 
@@ -49,7 +51,6 @@ private:
     std::shared_ptr<SSTable> sstable_;
     uint32_t fd_;
     uint32_t crc_;
-    uint64_t size_;
     std::atomic<uint32_t> refs_;
 };
 #endif

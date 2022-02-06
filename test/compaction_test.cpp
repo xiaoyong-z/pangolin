@@ -5,7 +5,7 @@
 #include "db.h"
 
 const int max_num = 10000;
-const int max_num2 = 1500;
+const int max_num2 = 10000;
 
 void clear_dir() {
     std::filesystem::remove_all("/home/parallels/metakv/data/");
@@ -49,14 +49,20 @@ TEST(COMPACTION_TEST, read_level_1_test) {
         db->set(key, value);
     }
 
+    std::cout << "start compaction" << std::endl;
     db->compaction();
+    // db->compaction();
+    // db->compaction();
+    // db->compaction();
+
+    std::cout << "end compaction" << std::endl;
     db->scan();
 
     for (size_t i = 0; i < max_num2; i++) {
         std::string key = "key" + std::to_string(i);
         std::string value = "value" + std::to_string(i);
         std::string get_value = db->get(key);
-        std::cout << "get_value : " << get_value << std::endl;
+        // std::cout << "get_value : " << get_value << std::endl;
         ASSERT_EQ(get_value.compare(value), 0);
     }
 }
