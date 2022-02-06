@@ -3,7 +3,7 @@
 #include <string>
 struct Options {
 	Options(const std::string& work_dir, uint64_t mem_table_size, uint64_t SSTable_max_sz,
-		uint64_t block_size, double bloom_false_positive, int max_level_num = 7, int level_size_multiplier = 10) : 
+		uint64_t block_size, double bloom_false_positive, int max_level_num = 5, int level_size_multiplier = 10) : 
 		work_dir_(work_dir), mem_table_size_(mem_table_size), SSTable_max_sz(SSTable_max_sz), 
 		block_size_(block_size), bloom_false_positive_(bloom_false_positive), max_level_num_(max_level_num),
 		level_size_multiplier_(level_size_multiplier){} 

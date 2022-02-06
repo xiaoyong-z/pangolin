@@ -12,29 +12,33 @@ void clear_dir() {
     std::filesystem::create_directory("/home/parallels/metakv/data/");
 }
 
-// TEST(COMPACTION_TEST, basic_test) {
-//     clear_dir();
+TEST(COMPACTION_TEST, basic_test) {
+    clear_dir();
 
-//     std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
-//     std::shared_ptr<DB> db = std::make_shared<DB>(opt);
+    std::shared_ptr<Options> opt = std::make_shared<Options>("/home/parallels/metakv/data/", 4096, 8192, 1024, 0.01);
+    std::shared_ptr<DB> db = std::make_shared<DB>(opt);
 
-//     for (size_t i = 0; i < max_num; i++) {
-//         std::string key = "key" + std::to_string(i);
-//         std::string value = "value" + std::to_string(i);
-//         db->set(key, value);
-//     }
+    while (true) {
+        for (size_t i = 0; i < max_num; i++) {
+            std::string key = "key" + std::to_string(i);
+            std::string value = "value" + std::to_string(i);
+            db->set(key, value);
+        }
 
-//     // db->scan();
+        // db->scan();
 
-//     for (size_t i = 0; i < max_num; i++) {
-//         std::string key = "key" + std::to_string(i);
-//         std::string value = "value" + std::to_string(i);
-//         std::string get_value = db->get(key);
-//         // std::cout << "get_value : " << get_value << std::endl;
-//         ASSERT_EQ(get_value.compare(value), 0);
-//     }
-//     // sleep(1000);
-// }
+        for (size_t i = 0; i < max_num; i++) {
+            std::string key = "key" + std::to_string(i);
+            std::string value = "value" + std::to_string(i);
+            std::string get_value = db->get(key);
+            // std::cout << "get_value : " << get_value << std::endl;
+            ASSERT_EQ(get_value.compare(value), 0);
+        }
+        sleep(3);
+        std::cout << "success" << std::endl;
+    }
+    // sleep(1000);
+}
 
 TEST(COMPACTION_TEST, read_level_1_test) {
     clear_dir();

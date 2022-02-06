@@ -7,9 +7,11 @@
 class CompactionState {
 public:
     CompactionState(int max_level_num) {
-        for (int i = 0; i < max_level_num; i++) {
+        for (int i = 0; i <= max_level_num; i++) {
             levels_ranges_.emplace_back();
+            levels_ranges_[i].clear();
             levels_table_set_.emplace_back();
+            levels_table_set_[i].clear();
         }
     }
 

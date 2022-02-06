@@ -136,7 +136,7 @@ namespace WALConfig {
 }
 
 namespace CompactionConfig {
-    static const int compaction_duration = 10000;
+    static const int compaction_duration = 5;
     static const int level0CompactionThreadshold = 10;
 }
 

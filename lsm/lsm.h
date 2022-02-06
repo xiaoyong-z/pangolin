@@ -30,7 +30,7 @@ public:
 		if (result != RC::SUCCESS) {
 			return nullptr;
 		}
-		// result = lsm->startCompaction();
+		result = lsm->startCompaction();
 		if (result != RC::SUCCESS) {
 			return nullptr;
 		}

@@ -42,8 +42,6 @@ bool Compaction::needCompaction() {
         uint64_t this_level_size = this_level_->getLevelSize();
         if (this_level_size > cur_level_max_size_) {
             return true;
-        } else {
-            std::cout << "fail" << std::endl;
         }
     }
     return false;
@@ -147,17 +145,12 @@ bool Compaction::fillTablesLnToLnp1() {
         plan_.next_range_ = std::move(nkr);
         if (state_->compareAndAdd(plan_) == true) {
             break;
-        } else {
-            std::cout << "fail" << std::endl;
         }
     }
     
 
     this_level_->UnRLock();
-    next_level_->UnRLock();
-    if (i == this_level_tables.size()) {
-        std::cout << "fail" << std::endl;
-    }
+    next_level_->UnRLock(); 
     return true;
 }
 
