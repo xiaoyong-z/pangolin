@@ -61,9 +61,14 @@ RC ManifestFile::replayManifest() {
     }
 
     char buf2[ManifestConfig::changeHeadSize];
-    size_t size; 
 
-    while ((size = read(file_, buf2, ManifestConfig::changeHeadSize)) == ManifestConfig::changeHeadSize) {
+    // struct stat f_stat;        
+    // fstat(file_, &f_stat);
+    // uint64_t file_size = f_stat.st_size;
+
+    size_t size; 
+    size = read(file_, buf2, ManifestConfig::changeHeadSize);
+    while (size == ManifestConfig::changeHeadSize) {
         uint32_t change_len = decodeFix32(buf2);
         uint32_t true_crc = decodeFix32(buf2 + 4);
 
@@ -82,6 +87,7 @@ RC ManifestFile::replayManifest() {
         if (result != RC::SUCCESS) {
             return result;
         }
+        size = read(file_, buf2, ManifestConfig::changeHeadSize);
     }
 
     return RC::SUCCESS;
@@ -150,11 +156,18 @@ RC ManifestFile::applyChangeSet(const pb::ManifestChangeSet& set) {
     } else {
         std::string write_buf;
         std::string serialize_set = set.SerializeAsString();
+
         uint32_t crc = crc32c::Value(serialize_set.data(), serialize_set.size());
         uint32_t change_len = serialize_set.size();
         encodeFix32(&write_buf, change_len);
         encodeFix32(&write_buf, crc);
         write_buf.append(serialize_set);
+
+        // struct stat f_stat;        
+        // fstat(file_, &f_stat);
+        // uint64_t file_size = f_stat.st_size;
+
+
         size_t size = write(file_, write_buf.data(), write_buf.size());
         if (size != write_buf.size()) {
             return RC::MANIFEST_WRITE_FILE_FAIL;
@@ -163,6 +176,10 @@ RC ManifestFile::applyChangeSet(const pb::ManifestChangeSet& set) {
         if (flag != 0) {
             return RC::MANIFEST_FSYNC_FILE_FAIL;
         }
+
+        // fstat(file_, &f_stat);
+        // uint64_t file_size2 = f_stat.st_size;
+        // assert(file_size2 == file_size + write_buf.size());
     }
     return RC::SUCCESS;
 }
@@ -203,14 +220,24 @@ RC ManifestFile::rewriteManifest() {
     if (flag != 0) {
         return RC::MANIFEST_FSYNC_FILE_FAIL;
     }
-    if (close(file) != 0) {
-        return RC::MANIFEST_CLOSE_FILE_FAIL;
-    }
+    // if (close(file) != 0) {
+    //     return RC::MANIFEST_CLOSE_FILE_FAIL;
+    // }
+    // if (close(file_) != 0) {
+    //     return RC::MANIFEST_CLOSE_FILE_FAIL;
+    // }
 
     std::string file_name = opt_->work_dir_ + ManifestConfig::fileName; 
     if (rename(rewrite_file_name.data(), file_name.data()) != 0) {
         return RC::MANIFEST_RENAME_FILE_FAIL;
     }
+    
+    file_ = file;
+    // assert(file_ > 0);
+    // struct stat f_stat;        
+    // fstat(file_, &f_stat);
+    // uint64_t file_size = f_stat.st_size;
+
     manifest_->setCreations(set.changes_size());
     manifest_->setDeletions(0);
     

@@ -51,17 +51,17 @@ TEST(COMPACTION_TEST, read_level_1_test) {
 
     std::cout << "start compaction" << std::endl;
     db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
-    // db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
+    db->compaction();
 
     std::cout << "end compaction" << std::endl;
     // db->scan();
